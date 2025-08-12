@@ -1,3 +1,5 @@
+// ignore_for_file: must_be_immutable
+
 import 'package:carpooling_app/business_logic/cubits/AuthCubit/cubit_auth.dart';
 import 'package:carpooling_app/business_logic/cubits/AuthCubit/state_auth.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';

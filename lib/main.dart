@@ -1,7 +1,6 @@
 import 'package:carpooling_app/constants/constStrings.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';
 import 'package:carpooling_app/firebase_options.dart';
-import 'package:carpooling_app/presentation/screens/signUp.dart';
 import 'package:carpooling_app/router/router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
