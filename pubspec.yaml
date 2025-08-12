@@ -37,6 +37,10 @@ dependencies:
   firebase_core: ^4.0.0
   flutter_screenutil: ^5.9.3
   gap: ^3.0.1
+  flutter_bloc: ^9.1.1
+  firebase_auth: ^6.0.0
+  geolocator: ^14.0.2
+  cloud_firestore: ^6.0.0
 
 dev_dependencies:
   flutter_test:
