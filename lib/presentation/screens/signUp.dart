@@ -1,5 +1,5 @@
-import 'package:carpooling_app/business_logic/cubits/cubitAuth/cubit_auth.dart';
-import 'package:carpooling_app/business_logic/cubits/cubitAuth/state_auth.dart';
+import 'package:carpooling_app/business_logic/cubits/AuthCubit/cubit_auth.dart';
+import 'package:carpooling_app/business_logic/cubits/AuthCubit/state_auth.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

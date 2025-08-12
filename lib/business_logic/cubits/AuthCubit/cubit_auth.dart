@@ -1,4 +1,4 @@
-import 'package:carpooling_app/business_logic/cubits/cubitAuth/state_auth.dart';
+import 'package:carpooling_app/business_logic/cubits/AuthCubit/state_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
