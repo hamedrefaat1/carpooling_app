@@ -165,6 +165,20 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
   late Usersetupcubit userSetupCubit;
   double? lat;
   double? lng;
+  final FocusNode _searchFocus = FocusNode();
+  final TextEditingController _searchController = TextEditingController();
+  bool showSuggestions = false;
+
+  final List<String> _demoPlaces = const [
+    'Cairo Festival City',
+    'Giza Pyramids',
+    'Nasr City',
+    'Heliopolis',
+    'Alexandria Corniche',
+    'Maadi',
+    'Smart Village',
+  ];
+  List<String> _filtered = [];
 
   @override
   void initState() {
@@ -172,11 +186,31 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     userSetupCubit = context.read<Usersetupcubit>();
     userSetupCubit.stratTracking();
+
+     _searchController.addListener((){
+       final searchText = _searchController.text.trim().toLowerCase();
+       _filtered= _demoPlaces.where((p) => p.toLowerCase().contains(searchText)).toList();
+       showSuggestions= searchText.isNotEmpty && _filtered.isNotEmpty && _searchFocus.hasFocus;
+     });
+    _searchFocus.addListener(() {
+      if (!_searchFocus.hasFocus) {
+        setState(() {
+          showSuggestions = false;
+        });
+      } else {
+        final searchText = _searchController.text.trim().toLowerCase();
+        setState(() {
+          showSuggestions = searchText.isNotEmpty && _filtered.isNotEmpty;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -251,23 +285,112 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
                 ),
                 onMapCreated: _onMapCreated,
               ),
-           
-           // SEARCH TEXT FILED
-           SafeArea(
-            child: Material(
-              elevation: 5,
-              borderRadius:BorderRadius.circular(8) ,
-              child: Container(
-                height: 20.h,
-                         decoration: BoxDecoration(
-                          color: Colors.white ,
-                          borderRadius: BorderRadius.circular(8),
-                         ),
-              ),
-            )
-            
-            )
 
+              // SEARCH TEXT FILED
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 20, right: 20, left: 20),
+                  child: Column(
+                    children: [
+                      Material(
+                        elevation: 5,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          height: 30.h,
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            focusNode: _searchFocus,
+                            keyboardType: TextInputType.streetAddress,
+                            textInputAction: TextInputAction.search,
+                            decoration: InputDecoration(
+                              hintText: "Where are you going? ",
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.blueAccent,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+
+                              suffixIcon: _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() {
+                                          _searchFocus.unfocus();
+                                          _filtered = [];
+                                        });
+                                      },
+                                      icon: Icon(Icons.clear),
+                                    )
+                                  : null,
+                              prefixIcon: Icon(Icons.search),
+                            ),
+                            onTapUpOutside: (_) {
+                              _searchFocus.unfocus();
+                            },
+                            onChanged: (value) {
+                              setState(() {});
+                            },
+                            onSubmitted: (_) {
+                              showSuggestions = false;
+                            },
+                          ),
+                        ),
+                      ),
+
+                      if (showSuggestions)
+                        Container(
+                          margin: const EdgeInsets.only(top: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                blurRadius: 12,
+                                spreadRadius: 0,
+                                color: Colors.black12,
+                              ),
+                            ],
+                          ),
+                          constraints: BoxConstraints(maxHeight: 260.h),
+                          child: ListView.separated(
+                            padding: EdgeInsets.zero,
+                            itemBuilder: (context, index) {
+                              final place = _filtered[index];
+                              return ListTile(
+                                leading: Icon(Icons.place_outlined),
+                                title: Text(
+                                  place,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineMedium,
+                                ),
+                                onTap: (){
+                                  _searchController.text=place;
+                                 setState(() {
+                                    _searchFocus.unfocus();
+                                 });
+
+                                },
+                              );
+                            },
+                            separatorBuilder: (_, __) =>
+                                const Divider(height: 1),
+                            itemCount: _filtered.length,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          
             ],
           );
         },
