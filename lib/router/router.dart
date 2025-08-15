@@ -41,9 +41,12 @@ class AppRouter {
        )
           
        );
-
-       case homeapp :
-       return MaterialPageRoute(builder: (_) => Homeapp());
+      case homeapp : 
+       return MaterialPageRoute(builder: (_)=> BlocProvider<Usersetupcubit>(create: (_)=> Usersetupcubit(auth, firestore) ,
+          child: Homeapp()
+       )
+          
+       );
       default:
         return null;
     }

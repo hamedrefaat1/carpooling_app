@@ -17,7 +17,7 @@
 
 //   @override
 //   void initState() {
-    
+
 //     super.initState();
 //     _initLocationFlow();
 //   }
@@ -101,7 +101,7 @@
 //       ),
 //       body: hasPos
 //           ? MapWidget(
-            
+
 //               styleUri: MapboxStyles.MAPBOX_STREETS,
 //               cameraOptions: CameraOptions(
 //                 center: Point(
@@ -144,18 +144,138 @@
 //     super.dispose();
 //   }
 // }
-
-
+import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
-class Homeapp extends StatelessWidget {
+class Homeapp extends StatefulWidget {
   const Homeapp({super.key});
 
   @override
+  State<Homeapp> createState() => _HomeappState();
+}
+
+class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
+  MapboxMap? _mapboxMap;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
+  late Usersetupcubit userSetupCubit;
+  double? lat;
+  double? lng;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    userSetupCubit = context.read<Usersetupcubit>();
+    userSetupCubit.stratTracking();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        // التطبيق اتقفل أو راح في الخلفية
+        userSetupCubit.stopTracking();
+        break;
+      case AppLifecycleState.resumed:
+        // التطبيق رجع تاني
+        userSetupCubit.stratTracking();
+        break;
+      default:
+        break;
+    }
+  }
+
+  void _goToMyLocation() {
+    if (_mapboxMap != null && lat != null && lng != null) {
+      _mapboxMap!.easeTo(
+        CameraOptions(center: Point(coordinates: Position(lng!, lat!))),
+        MapAnimationOptions(duration: 800),
+      );
+    }
+  }
+
+  Future<void> _onMapCreated(controller) async {
+    _mapboxMap = controller;
+
+    // تفعيل مؤشر الموقع النابض
+    await _mapboxMap!.location.updateSettings(
+      LocationComponentSettings(
+        enabled: true,
+        pulsingEnabled: true,
+        showAccuracyRing: true,
+      ),
+    );
+
+    // أول ما يفتح يروح على موقعي بزوم مناسب
+    _goToMyLocation();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-      body: MapWidget(),
+    return Scaffold(
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection("Users")
+            .doc(uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          var userData = snapshot.data!.data() as Map<String, dynamic>;
+          lat = userData["location"]["lat"];
+          lng = userData["location"]["lng"];
+
+          return Stack(
+            children: [
+              // this is MAP
+              MapWidget(
+                styleUri: MapboxStyles.DARK,
+                cameraOptions: CameraOptions(
+                  center: Point(coordinates: Position(lng!, lat!)),
+                  zoom: 17,
+                ),
+                onMapCreated: _onMapCreated,
+              ),
+           
+           // SEARCH TEXT FILED
+           SafeArea(
+            child: Material(
+              elevation: 5,
+              borderRadius:BorderRadius.circular(8) ,
+              child: Container(
+                height: 20.h,
+                         decoration: BoxDecoration(
+                          color: Colors.white ,
+                          borderRadius: BorderRadius.circular(8),
+                         ),
+              ),
+            )
+            
+            )
+
+            ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _goToMyLocation,
+        child: const Icon(Icons.my_location),
+      ),
     );
   }
 }
