@@ -10,6 +10,16 @@ class PlaceSearchSuccess extends PlaceSearchState {
   final List<MapboxPlace> places;
   final bool showSuggestions;
   PlaceSearchSuccess({required this.places, this.showSuggestions = true});
+
+  PlaceSearchSuccess copyWith({
+    List<MapboxPlace>? places,
+    bool? showSuggestions,
+  }) {
+    return PlaceSearchSuccess(
+      places: places ?? this.places,
+      showSuggestions: showSuggestions ?? this.showSuggestions,
+    );
+  }
 }
 
 class PlaceSearchError extends PlaceSearchState {
@@ -25,20 +35,16 @@ class PlaceSelected extends PlaceSearchState {
 class TripPublishing extends PlaceSearchState {
   final MapboxPlace place;
   TripPublishing(this.place);
-
 }
 
 class TripPublished extends PlaceSearchState {
   final MapboxPlace place;
   final String message;
 
-   TripPublished({
-    required this.place,
-    required this.message,
-  });
+  TripPublished({required this.place, required this.message});
 }
 
 class TripPublishError extends PlaceSearchState {
- final String erorrMessage;
+  final String erorrMessage;
   TripPublishError(this.erorrMessage);
 }

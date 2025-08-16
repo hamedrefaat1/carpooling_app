@@ -1,5 +1,6 @@
 // تعديل AppRouter لاستخدام static instance
 import 'package:carpooling_app/business_logic/cubits/AuthCubit/cubit_auth.dart';
+import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_cubit.dart';
 import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
 import 'package:carpooling_app/constants/constStrings.dart';
 import 'package:carpooling_app/presentation/screens/OTPVerify.dart';
@@ -41,12 +42,23 @@ class AppRouter {
        )
           
        );
-      case homeapp : 
-       return MaterialPageRoute(builder: (_)=> BlocProvider<Usersetupcubit>(create: (_)=> Usersetupcubit(auth, firestore) ,
-          child: Homeapp()
-       )
+      case homeapp:
+        return MaterialPageRoute(
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider<Usersetupcubit>(
+                create: (_) => Usersetupcubit(auth, firestore),
+              ),
+              BlocProvider<PlaceSearchCubit>.value(
+                value: PlaceSearchCubit(),
+              ),
+            ],
+            child: Homeapp(),
+          ),
+        );
+
           
-       );
+       
       default:
         return null;
     }
