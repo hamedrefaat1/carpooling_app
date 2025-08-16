@@ -9,7 +9,7 @@ class MapboxSrearchplacesrepo {
     String country = 'EG',
     int limit = 5,
     String language = 'ar',
-    String? proximity, // إضافة معامل proximity اختياري
+    String? proximity, 
   }) async {
     try {
       return mapboxSrearchplacesapi.searchPlaces(
@@ -17,7 +17,7 @@ class MapboxSrearchplacesrepo {
         country: country,
         limit: limit,
         language: language,
-        proximity: proximity, // تمرير proximity للـ API
+        proximity: proximity,
       );
     } catch (e) {
      throw Exception('Error searching places: $e');
