@@ -1,4 +1,3 @@
-// إصلاح PlaceSearchCubit
 import 'dart:async';
 import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_states.dart';
 import 'package:carpooling_app/data/models/mapbox_place.dart';
@@ -13,7 +12,7 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
 
   PlaceSearchCubit() : super(PlaceSearchInitial());
 
-  Future<void> searchPlaces(String query) async {
+  Future<void> searchPlaces(String query, {String? proximity}) async {
     if (query.isEmpty) {
       emit(PlaceSearchInitial());
       return;
@@ -24,7 +23,10 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
 
     emit(PlaceSearchLoading());
     try {
-      final places = await _mapboxSrearchplacesrepo.getSerachPlaces(query);
+      final places = await _mapboxSrearchplacesrepo.getSerachPlaces(
+        query,
+        proximity: proximity,
+      );
       
       if (places.isEmpty) {
         emit(PlaceSearchError('No places found for "$query"'));
@@ -47,7 +49,7 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
 
   void selectPlace(MapboxPlace place) {
     _selectedPlace = place;
-    emit(PlaceSelected(place)); // هذا الـ state مستقل ومش هيتأثر بالـ timer
+    emit(PlaceSelected(place));
   }
 
   void hideSuggestions() {
@@ -103,7 +105,6 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
         message: 'Your Trip is Published to ${_selectedPlace!.name}',
       ));
       
-      // مسح المكان المختار بعد النشر
       _selectedPlace = null;
     } catch (e) {
       emit(TripPublishError(e.toString()));

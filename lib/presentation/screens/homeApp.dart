@@ -57,7 +57,8 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
       // تأخير البحث لمدة 500ms
       _searchTimer = Timer(const Duration(milliseconds: 500), () {
         if (mounted && !_isSelectingPlace) {
-          context.read<PlaceSearchCubit>().searchPlaces(searchText);
+         final proximity = '${lng ?? ''},${lat ?? ''}';
+          context.read<PlaceSearchCubit>().searchPlaces(searchText, proximity: proximity);
         }
       });
     });
