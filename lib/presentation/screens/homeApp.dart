@@ -1,150 +1,9 @@
-// import 'dart:async';
-// import 'package:flutter/material.dart';
-// import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-// import 'package:geolocator/geolocator.dart' as geo;
+import 'dart:async';
 
-// class Homeapp extends StatefulWidget {
-//   const Homeapp({super.key});
-
-//   @override
-//   State<Homeapp> createState() => _HomeappState();
-// }
-
-// class _HomeappState extends State<Homeapp> {
-//   MapboxMap? _mapboxMap;
-//   geo.Position? _currentPosition;
-//   StreamSubscription<geo.Position>? _posSub;
-
-//   @override
-//   void initState() {
-
-//     super.initState();
-//     _initLocationFlow();
-//   }
-
-//   Future<void> _initLocationFlow() async {
-//     // 1) تأكد إن الخدمة شغالة واطلب صلاحيات
-//     if (!await geo.Geolocator.isLocationServiceEnabled()) {
-//       // تقدر تفتح إعدادات الموقع للمستخدم لو حبيت
-//       return;
-//     }
-//     var permission = await geo.Geolocator.checkPermission();
-//     if (permission == geo.LocationPermission.denied) {
-//       permission = await geo.Geolocator.requestPermission();
-//     }
-//     if (permission == geo.LocationPermission.denied ||
-//         permission == geo.LocationPermission.deniedForever) {
-//       return;
-//     }
-
-//     // 2) هات اللوكيشن الأولي
-//     final first = await geo.Geolocator.getCurrentPosition(
-//       desiredAccuracy: geo.LocationAccuracy.high,
-//     );
-//     setState(() => _currentPosition = first);
-
-//     // 3) ستريم تحديثات لايف
-//     _posSub = geo.Geolocator.getPositionStream(
-//       locationSettings: const geo.LocationSettings(
-//         accuracy: geo.LocationAccuracy.high,
-//         distanceFilter: 5,
-//       ),
-//     ).listen((p) {
-//       setState(() => _currentPosition = p);
-//       if (_mapboxMap != null) {
-//         _mapboxMap!.flyTo(
-//           CameraOptions(
-//             center: Point(coordinates: Position(p.longitude, p.latitude)),
-//             zoom: 15,
-//           ),
-//           MapAnimationOptions(duration: 500),
-//         );
-//       }
-//     });
-//   }
-
-//   Future<void> _onMapCreated(MapboxMap controller) async {
-//     _mapboxMap = controller;
-
-//     // فعّل الـ User Location Puck (نقطة موقع المستخدم مع نبض)
-//     await _mapboxMap!.location.updateSettings(
-//       LocationComponentSettings(
-//         enabled: true,
-//         pulsingEnabled: true,
-//         showAccuracyRing: true,
-//       ),
-//     );
-
-//     // وجّه الكاميرا على اللوكيشن الحالي لو موجود
-//     if (_currentPosition != null) {
-//       _mapboxMap!.setCamera(
-//         CameraOptions(
-//           center: Point(
-//             coordinates: Position(
-//               _currentPosition!.longitude,
-//               _currentPosition!.latitude,
-//             ),
-//           ),
-//           zoom: 15,
-//         ),
-//       );
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final hasPos = _currentPosition != null;
-
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Live Map (Mapbox)'),
-//       ),
-//       body: hasPos
-//           ? MapWidget(
-
-//               styleUri: MapboxStyles.MAPBOX_STREETS,
-//               cameraOptions: CameraOptions(
-//                 center: Point(
-//                   coordinates: Position(
-//                     _currentPosition!.longitude,
-//                     _currentPosition!.latitude,
-//                   ),
-//                 ),
-//                 zoom: 15,
-//               ),
-//               onMapCreated: _onMapCreated,
-//             )
-//           : const Center(child: CircularProgressIndicator()),
-//       floatingActionButton: hasPos
-//           ? FloatingActionButton(
-//               onPressed: () {
-//                 if (_mapboxMap == null || _currentPosition == null) return;
-//                 _mapboxMap!.easeTo(
-//                   CameraOptions(
-//                     center: Point(
-//                       coordinates: Position(
-//                         _currentPosition!.longitude,
-//                         _currentPosition!.latitude,
-//                       ),
-//                     ),
-//                     zoom: 15,
-//                   ),
-//                   MapAnimationOptions(duration: 400),
-//                 );
-//               },
-//               child: const Icon(Icons.my_location),
-//             )
-//           : null,
-//     );
-//   }
-
-//   @override
-//   void dispose() {
-//     _posSub?.cancel();
-//     super.dispose();
-//   }
-// }
+import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_cubit.dart';
+import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_states.dart';
 import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
+import 'package:carpooling_app/data/models/mapbox_place.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -168,17 +27,9 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
   final FocusNode _searchFocus = FocusNode();
   final TextEditingController _searchController = TextEditingController();
   bool showSuggestions = false;
+  bool _isSelectingPlace = false; // فلاج لمنع البحث أثناء اختيار مكان
 
-  final List<String> _demoPlaces = const [
-    'Cairo Festival City',
-    'Giza Pyramids',
-    'Nasr City',
-    'Heliopolis',
-    'Alexandria Corniche',
-    'Maadi',
-    'Smart Village',
-  ];
-  List<String> _filtered = [];
+  Timer? _searchTimer;
 
   @override
   void initState() {
@@ -187,11 +38,30 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
     userSetupCubit = context.read<Usersetupcubit>();
     userSetupCubit.stratTracking();
 
-     _searchController.addListener((){
-       final searchText = _searchController.text.trim().toLowerCase();
-       _filtered= _demoPlaces.where((p) => p.toLowerCase().contains(searchText)).toList();
-       showSuggestions= searchText.isNotEmpty && _filtered.isNotEmpty && _searchFocus.hasFocus;
-     });
+    _searchController.addListener(() {
+      // تجاهل التغيير لو إحنا بنختار مكان
+      if (_isSelectingPlace) {
+        return;
+      }
+
+      final searchText = _searchController.text.trim();
+
+      // إلغاء البحث السابق
+      _searchTimer?.cancel();
+
+      if (searchText.isEmpty) {
+        context.read<PlaceSearchCubit>().clearSearch();
+        return;
+      }
+
+      // تأخير البحث لمدة 500ms
+      _searchTimer = Timer(const Duration(milliseconds: 500), () {
+        if (mounted && !_isSelectingPlace) {
+          context.read<PlaceSearchCubit>().searchPlaces(searchText);
+        }
+      });
+    });
+
     _searchFocus.addListener(() {
       if (!_searchFocus.hasFocus) {
         setState(() {
@@ -200,7 +70,7 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
       } else {
         final searchText = _searchController.text.trim().toLowerCase();
         setState(() {
-          showSuggestions = searchText.isNotEmpty && _filtered.isNotEmpty;
+          showSuggestions = searchText.isNotEmpty;
         });
       }
     });
@@ -209,6 +79,7 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _searchTimer?.cancel(); // إضافة هذا السطر المهم!
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -221,11 +92,9 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
-        // التطبيق اتقفل أو راح في الخلفية
         userSetupCubit.stopTracking();
         break;
       case AppLifecycleState.resumed:
-        // التطبيق رجع تاني
         userSetupCubit.stratTracking();
         break;
       default:
@@ -245,7 +114,6 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
   Future<void> _onMapCreated(controller) async {
     _mapboxMap = controller;
 
-    // تفعيل مؤشر الموقع النابض
     await _mapboxMap!.location.updateSettings(
       LocationComponentSettings(
         enabled: true,
@@ -254,8 +122,40 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
       ),
     );
 
-    // أول ما يفتح يروح على موقعي بزوم مناسب
     _goToMyLocation();
+  }
+
+  void onPlaceSelected(MapboxPlace place) {
+    _isSelectingPlace = true; // منع البحث
+    _searchController.text = place.name;
+    _searchFocus.unfocus();
+    context.read<PlaceSearchCubit>().selectPlace(place);
+    
+    // انتظار شوية عشان الـ TextField ميبحثش تاني
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _isSelectingPlace = false;
+      }
+    });
+  }
+
+  void onClearSearch() {
+    _isSelectingPlace = true; // منع البحث أثناء المسح
+    _searchController.clear();
+    _searchFocus.unfocus();
+    context.read<PlaceSearchCubit>().clearSearch();
+    
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        _isSelectingPlace = false;
+      }
+    });
+  }
+
+  void onPublishTrip() {
+    if (lat != null && lng != null) {
+      context.read<PlaceSearchCubit>().publishTrip(lat!, lng!);
+    }
   }
 
   @override
@@ -274,130 +174,290 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
           lat = userData["location"]["lat"];
           lng = userData["location"]["lng"];
 
-          return Stack(
-            children: [
-              // this is MAP
-              MapWidget(
-                styleUri: MapboxStyles.DARK,
-                cameraOptions: CameraOptions(
-                  center: Point(coordinates: Position(lng!, lat!)),
-                  zoom: 17,
+          return BlocListener<PlaceSearchCubit, PlaceSearchState>(
+            listenWhen: (previous, current) {
+              return current != previous;
+            },
+            listener: (context, state) {
+              if (state is TripPublished) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.green,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+                _searchController.clear();
+              } else if (state is TripPublishError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.erorrMessage),
+                    backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              } else if (state is PlaceSearchError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.erorrMessage),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            child: Stack(
+              children: [
+                MapWidget(
+                  styleUri: MapboxStyles.DARK,
+                  cameraOptions: CameraOptions(
+                    center: Point(coordinates: Position(lng!, lat!)),
+                    zoom: 17,
+                  ),
+                  onMapCreated: _onMapCreated,
                 ),
-                onMapCreated: _onMapCreated,
-              ),
 
-              // SEARCH TEXT FILED
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 20, right: 20, left: 20),
-                  child: Column(
-                    children: [
-                      Material(
-                        elevation: 5,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          height: 30.h,
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            focusNode: _searchFocus,
-                            keyboardType: TextInputType.streetAddress,
-                            textInputAction: TextInputAction.search,
-                            decoration: InputDecoration(
-                              hintText: "Where are you going? ",
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.blueAccent,
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: 20,
+                      right: 20,
+                      left: 20,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSearchField(),
+
+                        BlocBuilder<PlaceSearchCubit, PlaceSearchState>(
+                          builder: (context, state) {
+                            // إضافة debug prints لفهم المشكلة
+                            print("Current state: ${state.runtimeType}");
+                            
+                            if (state is PlaceSearchSuccess) {
+                              print("Places count: ${state.places.length}");
+                              print("Show suggestions: ${state.showSuggestions}");
+                              return _buildSuggestionsList(state.places);
+                            } else if (state is PlaceSelected) {
+                              print("Place selected: ${state.selectedPlace.name}");
+                              return _buildSelectedPlace(state.selectedPlace);
+                            } else if (state is PlaceSearchLoading) {
+                              print("Loading...");
+                              return Container(
+                                margin: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-
-                              suffixIcon: _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        setState(() {
-                                          _searchFocus.unfocus();
-                                          _filtered = [];
-                                        });
-                                      },
-                                      icon: Icon(Icons.clear),
-                                    )
-                                  : null,
-                              prefixIcon: Icon(Icons.search),
-                            ),
-                            onTapUpOutside: (_) {
-                              _searchFocus.unfocus();
-                            },
-                            onChanged: (value) {
-                              setState(() {});
-                            },
-                            onSubmitted: (_) {
-                              showSuggestions = false;
-                            },
-                          ),
-                        ),
-                      ),
-
-                      if (showSuggestions)
-                        Container(
-                          margin: const EdgeInsets.only(top: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.grey,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                blurRadius: 12,
-                                spreadRadius: 0,
-                                color: Colors.black12,
-                              ),
-                            ],
-                          ),
-                          constraints: BoxConstraints(maxHeight: 260.h),
-                          child: ListView.separated(
-                            padding: EdgeInsets.zero,
-                            itemBuilder: (context, index) {
-                              final place = _filtered[index];
-                              return ListTile(
-                                leading: Icon(Icons.place_outlined),
-                                title: Text(
-                                  place,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.headlineMedium,
+                                child: const Row(
+                                  children: [
+                                    CircularProgressIndicator(strokeWidth: 2),
+                                    SizedBox(width: 16),
+                                    Text("Searching..."),
+                                  ],
                                 ),
-                                onTap: (){
-                                  _searchController.text=place;
-                                 setState(() {
-                                    _searchFocus.unfocus();
-                                 });
-
-                                },
                               );
-                            },
-                            separatorBuilder: (_, __) =>
-                                const Divider(height: 1),
-                            itemCount: _filtered.length,
-                          ),
+                            } else if (state is PlaceSearchError) {
+                              print("Error: ${state.erorrMessage}");
+                            }
+                            return const SizedBox.shrink();
+                          },
                         ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          
-            ],
+              ],
+            ),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _goToMyLocation,
         child: const Icon(Icons.my_location),
+      ),
+    );
+  }
+
+  Widget _buildSuggestionsList(List<MapboxPlace> places) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(blurRadius: 12, spreadRadius: 0, color: Colors.black12),
+        ],
+      ),
+      constraints: BoxConstraints(maxHeight: 260.h),
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
+        itemBuilder: (context, index) {
+          final place = places[index];
+          return ListTile(
+            leading: const Icon(Icons.place_outlined, color: Colors.red),
+            title: Text(
+              place.name,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            subtitle: Text(
+              place.fullAddress,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () => onPlaceSelected(place),
+          );
+        },
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemCount: places.length,
+      ),
+    );
+  }
+
+  Widget _buildSearchField() {
+    return Material(
+      elevation: 5,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: 50.h, // زودت الارتفاع شوية
+        decoration: BoxDecoration(
+          color: Colors.white, // غيرت اللون من grey لـ white
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: BlocBuilder<PlaceSearchCubit, PlaceSearchState>(
+          builder: (context, state) {
+            return TextField(
+              controller: _searchController,
+              focusNode: _searchFocus,
+              keyboardType: TextInputType.streetAddress,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: "Where are you going? ",
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Colors.blueAccent),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (state is PlaceSearchLoading)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                      ),
+                    if (_searchController.text.isNotEmpty)
+                      IconButton(
+                        onPressed: onClearSearch,
+                        icon: const Icon(Icons.clear),
+                      ),
+                  ],
+                ),
+                prefixIcon: const Icon(Icons.search),
+              ),
+              onTapUpOutside: (_) {
+                _searchFocus.unfocus();
+              },
+              onSubmitted: (_) {
+                context.read<PlaceSearchCubit>().hideSuggestions();
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectedPlace(MapboxPlace place) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(blurRadius: 8, spreadRadius: 0, color: Colors.black12),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.location_on, color: Colors.red, size: 24),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      place.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      place.fullAddress,
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: BlocBuilder<PlaceSearchCubit, PlaceSearchState>(
+              builder: (context, state) {
+                final isPublishing = state is TripPublishing;
+                return ElevatedButton.icon(
+                  onPressed: isPublishing ? null : onPublishTrip,
+                  icon: isPublishing
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.publish),
+                  label: Text(isPublishing ? 'جاري النشر...' : 'نشر رحلة'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
