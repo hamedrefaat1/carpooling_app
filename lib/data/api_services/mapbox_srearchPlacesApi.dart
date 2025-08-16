@@ -13,7 +13,7 @@ class MapboxSrearchplacesapi {
     String country = 'EG',
     int limit = 5,
     String language = 'ar',
-    String? proximity, // إضافة معامل proximity اختياري
+    String? proximity, 
   }) async {
     try {
       if (query.length < 3) {
@@ -27,8 +27,8 @@ class MapboxSrearchplacesapi {
         '&types=place,locality,neighborhood,address,poi'
         '&limit=$limit'
         '&language=$language'
-        '&autocomplete=true' // إضافة autocomplete لتحسين النتائج
-        '${proximity != null ? '&proximity=$proximity' : ''}', // إضافة proximity إذا كانت موجودة
+        '&autocomplete=true'
+        '${proximity != null ? '&proximity=$proximity' : ''}', 
       );
 
       final response = await http.get(url);

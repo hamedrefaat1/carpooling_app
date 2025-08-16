@@ -80,7 +80,7 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _searchTimer?.cancel(); // إضافة هذا السطر المهم!
+    _searchTimer?.cancel();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -325,9 +325,9 @@ class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
       elevation: 5,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        height: 50.h, // زودت الارتفاع شوية
+        height: 50.h, 
         decoration: BoxDecoration(
-          color: Colors.white, // غيرت اللون من grey لـ white
+          color: Colors.white, 
           borderRadius: BorderRadius.circular(8),
         ),
         child: BlocBuilder<PlaceSearchCubit, PlaceSearchState>(
