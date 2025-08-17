@@ -1,8 +1,7 @@
 import 'dart:async';
 
-import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_cubit.dart';
-import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_states.dart';
-import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
+import 'package:carpooling_app/business_logic/cubits/DriverPlacesSearchCubit/driver_places_search_cubit.dart';
+import 'package:carpooling_app/business_logic/cubits/DriverPlacesSearchCubit/driver_places_search_states.dart';
 import 'package:carpooling_app/data/models/mapbox_place.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -21,7 +20,6 @@ class HomeappDriver extends StatefulWidget {
 class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserver {
   MapboxMap? _mapboxMap;
   String uid = FirebaseAuth.instance.currentUser!.uid;
-  late Usersetupcubit userSetupCubit;
   double? lat;
   double? lng;
   final FocusNode _searchFocus = FocusNode();
@@ -34,9 +32,6 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    userSetupCubit = context.read<Usersetupcubit>();
-    userSetupCubit.stratTracking();
 
     _searchController.addListener(() {
       // تجاهل التغيير لو إحنا بنختار مكان
@@ -50,7 +45,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
       _searchTimer?.cancel();
 
       if (searchText.isEmpty) {
-        context.read<PlaceSearchCubit>().clearSearch();
+        context.read<DriverPlacesSearchCubit>().clearSearch();
         return;
       }
 
@@ -58,7 +53,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
       _searchTimer = Timer(const Duration(milliseconds: 500), () {
         if (mounted && !_isSelectingPlace) {
          final proximity = '${lng ?? ''},${lat ?? ''}';
-          context.read<PlaceSearchCubit>().searchPlaces(searchText, proximity: proximity);
+          context.read<DriverPlacesSearchCubit>().searchPlaces(searchText, proximity: proximity);
         }
       });
     });
@@ -79,29 +74,14 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
+   
     _searchTimer?.cancel();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
 
-    switch (state) {
-      case AppLifecycleState.paused:
-      case AppLifecycleState.detached:
-        userSetupCubit.stopTracking();
-        break;
-      case AppLifecycleState.resumed:
-        userSetupCubit.stratTracking();
-        break;
-      default:
-        break;
-    }
-  }
 
   void _goToMyLocation() {
     if (_mapboxMap != null && lat != null && lng != null) {
@@ -130,7 +110,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
     _isSelectingPlace = true; // منع البحث
     _searchController.text = place.name;
     _searchFocus.unfocus();
-    context.read<PlaceSearchCubit>().selectPlace(place);
+    context.read<DriverPlacesSearchCubit>().selectPlace(place);
     
     // انتظار شوية عشان الـ TextField ميبحثش تاني
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -144,7 +124,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
     _isSelectingPlace = true; // منع البحث أثناء المسح
     _searchController.clear();
     _searchFocus.unfocus();
-    context.read<PlaceSearchCubit>().clearSearch();
+    context.read<DriverPlacesSearchCubit>().clearSearch();
     
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
@@ -155,7 +135,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
 
   void onPublishTrip() {
     if (lat != null && lng != null) {
-      context.read<PlaceSearchCubit>().publishTrip(lat!, lng!);
+      context.read<DriverPlacesSearchCubit>().publishTrip(lat!, lng!);
     }
   }
 
@@ -175,12 +155,12 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
           lat = userData["location"]["lat"];
           lng = userData["location"]["lng"];
 
-          return BlocListener<PlaceSearchCubit, PlaceSearchState>(
+          return BlocListener<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
             listenWhen: (previous, current) {
               return current != previous;
             },
             listener: (context, state) {
-              if (state is TripPublished) {
+              if (state is DriverTripPublished) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
@@ -189,7 +169,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
                   ),
                 );
                 _searchController.clear();
-              } else if (state is TripPublishError) {
+              } else if (state is DriverTripPublishError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.erorrMessage),
@@ -197,7 +177,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
                     duration: const Duration(seconds: 3),
                   ),
                 );
-              } else if (state is PlaceSearchError) {
+              } else if (state is DriverPlacesSearchError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.erorrMessage),
@@ -229,19 +209,19 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
                       children: [
                         _buildSearchField(),
 
-                        BlocBuilder<PlaceSearchCubit, PlaceSearchState>(
+                        BlocBuilder<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
                           builder: (context, state) {
                             // إضافة debug prints لفهم المشكلة
                             print("Current state: ${state.runtimeType}");
                             
-                            if (state is PlaceSearchSuccess) {
+                            if (state is DriverPlacesSearchSuccess) {
                               print("Places count: ${state.places.length}");
                               print("Show suggestions: ${state.showSuggestions}");
                               return _buildSuggestionsList(state.places);
                             } else if (state is PlaceSelected) {
                               print("Place selected: ${state.selectedPlace.name}");
                               return _buildSelectedPlace(state.selectedPlace);
-                            } else if (state is PlaceSearchLoading) {
+                            } else if (state is DriverPlacesSearchLoading) {
                               print("Loading...");
                               return Container(
                                 margin: const EdgeInsets.only(top: 8),
@@ -258,7 +238,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
                                   ],
                                 ),
                               );
-                            } else if (state is PlaceSearchError) {
+                            } else if (state is DriverPlacesSearchError) {
                               print("Error: ${state.erorrMessage}");
                             }
                             return const SizedBox.shrink();
@@ -330,7 +310,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
           color: Colors.white, 
           borderRadius: BorderRadius.circular(8),
         ),
-        child: BlocBuilder<PlaceSearchCubit, PlaceSearchState>(
+        child: BlocBuilder<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
           builder: (context, state) {
             return TextField(
               controller: _searchController,
@@ -351,7 +331,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (state is PlaceSearchLoading)
+                    if (state is DriverPlacesSearchLoading)
                       const Padding(
                         padding: EdgeInsets.only(right: 8),
                         child: SizedBox(
@@ -376,7 +356,7 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
                 _searchFocus.unfocus();
               },
               onSubmitted: (_) {
-                context.read<PlaceSearchCubit>().hideSuggestions();
+                context.read<DriverPlacesSearchCubit>().hideSuggestions();
               },
             );
           },
@@ -430,9 +410,9 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
-            child: BlocBuilder<PlaceSearchCubit, PlaceSearchState>(
+            child: BlocBuilder<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
               builder: (context, state) {
-                final isPublishing = state is TripPublishing;
+                final isPublishing = state is DriverTripPublishing;
                 return ElevatedButton.icon(
                   onPressed: isPublishing ? null : onPublishTrip,
                   icon: isPublishing

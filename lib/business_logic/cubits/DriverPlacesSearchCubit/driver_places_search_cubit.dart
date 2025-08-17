@@ -1,27 +1,27 @@
 import 'dart:async';
-import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_states.dart';
+import 'package:carpooling_app/business_logic/cubits/DriverPlacesSearchCubit/driver_places_search_states.dart';
 import 'package:carpooling_app/data/models/mapbox_place.dart';
 import 'package:carpooling_app/data/repositories/mapbox_srearchPlacesRepo.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class PlaceSearchCubit extends Cubit<PlaceSearchState> {
+class DriverPlacesSearchCubit extends Cubit<DriverPlacesSearchStates> {
   final MapboxSrearchplacesrepo _mapboxSrearchplacesrepo = MapboxSrearchplacesrepo();
   MapboxPlace? _selectedPlace;
 
-  PlaceSearchCubit() : super(PlaceSearchInitial());
+  DriverPlacesSearchCubit() : super(DriverPlacesSearchInitial());
 
   Future<void> searchPlaces(String query, {String? proximity}) async {
     if (query.isEmpty) {
-      emit(PlaceSearchInitial());
+      emit(DriverPlacesSearchInitial());
       return;
     }
     if (query.length < 3) {
       return;
     }
 
-    emit(PlaceSearchLoading());
+    emit(DriverPlacesSearchLoading());
     try {
       final places = await _mapboxSrearchplacesrepo.getSerachPlaces(
         query,
@@ -29,11 +29,11 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
       );
       
       if (places.isEmpty) {
-        emit(PlaceSearchError('No places found for "$query"'));
+        emit(DriverPlacesSearchError('No places found for "$query"'));
         return;
       }
       
-      emit(PlaceSearchSuccess(places: places));
+      emit(DriverPlacesSearchSuccess(places: places));
     } catch (e) {
       String errorMessage = 'Search failed';
       
@@ -43,7 +43,7 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
         errorMessage = 'Check your internet connection';
       }
       
-      emit(PlaceSearchError(errorMessage));
+      emit(DriverPlacesSearchError(errorMessage));
     }
   }
 
@@ -53,36 +53,36 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
   }
 
   void hideSuggestions() {
-    if (state is PlaceSearchSuccess) {
-      final currentState = state as PlaceSearchSuccess;
+    if (state is DriverPlacesSearchSuccess) {
+      final currentState = state as DriverPlacesSearchSuccess;
       emit(currentState.copyWith(showSuggestions: false));
     }
   }
 
   void showSuggestions() {
-    if (state is PlaceSearchSuccess) {
-      final currentState = state as PlaceSearchSuccess;
+    if (state is DriverPlacesSearchSuccess) {
+      final currentState = state as DriverPlacesSearchSuccess;
       emit(currentState.copyWith(showSuggestions: true));
     }
   }
 
   void clearSearch() {
     _selectedPlace = null;
-    emit(PlaceSearchInitial());
+    emit(DriverPlacesSearchInitial());
   }
 
   Future<void> publishTrip(double driverLat, double driverLng) async {
     if (_selectedPlace == null) {
-      emit(TripPublishError("No selected place"));
+      emit(DriverTripPublishError("No selected place"));
       return;
     }
     
     try {
-      emit(TripPublishing(_selectedPlace!));
+      emit(DriverTripPublishing(_selectedPlace!));
       
       final userId = FirebaseAuth.instance.currentUser?.uid;
       if (userId == null) {
-        emit(TripPublishError("User not found"));
+        emit(DriverTripPublishError("User not found"));
         return;
       }
       
@@ -100,14 +100,14 @@ class PlaceSearchCubit extends Cubit<PlaceSearchState> {
         'availableSeats': 4,
       });
       
-      emit(TripPublished(
+      emit(DriverTripPublished(
         place: _selectedPlace!,
         message: 'Your Trip is Published to ${_selectedPlace!.name}',
       ));
       
       _selectedPlace = null;
     } catch (e) {
-      emit(TripPublishError(e.toString()));
+      emit(DriverTripPublishError(e.toString()));
     }
   }
 }

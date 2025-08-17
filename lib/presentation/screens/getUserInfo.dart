@@ -100,7 +100,7 @@ class _GetUserInfoState extends State<GetUserInfo> {
 
               String type = doc.get("type");
               if (type == "driver") {
-                Navigator.pushReplacementNamed(context, "/homeAppDriver");
+                Navigator.pushReplacementNamed(context, "/driverMainShell");
               } else {
                 Navigator.pushReplacementNamed(context, "/homeAppRider");
               }
