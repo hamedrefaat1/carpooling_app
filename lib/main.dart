@@ -19,21 +19,23 @@ void main() async {
 
   if (user == null) {
     initialRoute = signUpScreen;
-  }
-  DocumentSnapshot userDoc = await FirebaseFirestore.instance
-      .collection("Users")
-      .doc(user!.uid)
-      .get();
-  if (!userDoc.exists) {
-    initialRoute = getUserInfo; 
-  }
-  Map<String, dynamic> userDate = userDoc.data() as Map<String, dynamic>;
-  userType = userDate["type"];
-
-  if (userType == "driver") {
-    initialRoute = driverMainShell;
   } else {
-    initialRoute = homeAppRider;
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection("Users")
+        .doc(user.uid)
+        .get();
+    if (!userDoc.exists) {
+      initialRoute = getUserInfo;
+    } else {
+      Map<String, dynamic> userDate = userDoc.data() as Map<String, dynamic>;
+      userType = userDate["type"];
+
+      if (userType == "driver") {
+        initialRoute = driverMainShell;
+      } else {
+        initialRoute = homeAppRider;
+      }
+    }
   }
 
   //await setUp();
@@ -58,7 +60,7 @@ class CarpoolingApp extends StatelessWidget {
           themeMode: ThemeMode.light,
           debugShowCheckedModeBanner: false,
           onGenerateRoute: AppRouter().generateRoute,
-          initialRoute: signUpScreen,
+          initialRoute: initialRoute,
           home: child,
         );
       },
