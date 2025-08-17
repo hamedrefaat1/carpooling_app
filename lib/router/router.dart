@@ -3,9 +3,10 @@ import 'package:carpooling_app/business_logic/cubits/AuthCubit/cubit_auth.dart';
 import 'package:carpooling_app/business_logic/cubits/PlaceSearchCubit/place_search_cubit.dart';
 import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
 import 'package:carpooling_app/constants/constStrings.dart';
+import 'package:carpooling_app/presentation/driverScreens/home_app_driver.dart';
+import 'package:carpooling_app/presentation/riderScreens/home_app_rider.dart';
 import 'package:carpooling_app/presentation/screens/OTPVerify.dart';
-import 'package:carpooling_app/presentation/screens/homeApp.dart';
-import 'package:carpooling_app/presentation/screens/homeScreen.dart';
+import 'package:carpooling_app/presentation/screens/getUserInfo.dart';
 import 'package:carpooling_app/presentation/screens/signUp.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -36,13 +37,13 @@ class AppRouter {
           ),
         );
       
-       case homeScreen : 
+       case getUserInfo : 
        return MaterialPageRoute(builder: (_)=> BlocProvider<Usersetupcubit>(create: (_)=> Usersetupcubit(auth, firestore) ,
-          child: HomeScreen()
+          child: GetUserInfo()
        )
           
        );
-      case homeapp:
+      case homeAppDriver:
         return MaterialPageRoute(
           builder: (_) => MultiBlocProvider(
             providers: [
@@ -53,9 +54,12 @@ class AppRouter {
                 value: PlaceSearchCubit(),
               ),
             ],
-            child: Homeapp(),
+            child: HomeappDriver(),
           ),
         );
+
+        case homeAppRider:
+        return MaterialPageRoute(builder: (_)=> HomeAppRider());
 
           
        

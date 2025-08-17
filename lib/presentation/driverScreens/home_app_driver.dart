@@ -11,14 +11,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
-class Homeapp extends StatefulWidget {
-  const Homeapp({super.key});
+class HomeappDriver extends StatefulWidget {
+  const HomeappDriver({super.key});
 
   @override
-  State<Homeapp> createState() => _HomeappState();
+  State<HomeappDriver> createState() => _HomeappDriverState();
 }
 
-class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
+class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserver {
   MapboxMap? _mapboxMap;
   String uid = FirebaseAuth.instance.currentUser!.uid;
   late Usersetupcubit userSetupCubit;

@@ -16,7 +16,7 @@ void main() async {
   if (user == null) {
     initialRoute = signUpScreen;
   } else {
-    initialRoute = homeapp;
+    initialRoute = homeAppDriver;
   }
 
   //await setUp();
@@ -40,10 +40,10 @@ class CarpoolingApp extends StatelessWidget {
         return MaterialApp(
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
+        themeMode: ThemeMode.dark,
         debugShowCheckedModeBanner: false,
         onGenerateRoute: AppRouter().generateRoute,
-        initialRoute:initialRoute,
+        initialRoute:signUpScreen,
         home:child ,
       );
       },

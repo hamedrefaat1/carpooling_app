@@ -108,7 +108,7 @@ class VerifyPhoneScreen extends StatelessWidget {
                           Navigator.pop(context);
                           Navigator.pushNamed(
                             context,
-                            '/homeScreen',
+                            '/getUserInfo',
                           );
                         }
                       },

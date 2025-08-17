@@ -13,14 +13,17 @@ class Usersetupcubit extends Cubit<UserSetupStates> {
 
   Usersetupcubit(this.auth, this.firestore) : super(UserSetupIntial());
 
-  Future<void> requestLocationAndSetup(String userType) async {
+  Future<void> requestLocationAndSetupWithInfo(
+    Map<String, dynamic> userInfo,
+  ) async {
     try {
       if (isClosed) return;
       emit(UserSetupLoading());
 
       LocationPermission permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        if (!isClosed) emit(UserSetupError("the Permission Location is denied"));
+        if (!isClosed)
+          emit(UserSetupError("the Permission Location is denied"));
         return;
       }
 
@@ -32,8 +35,13 @@ class Usersetupcubit extends Cubit<UserSetupStates> {
       String phone = auth.currentUser!.phoneNumber!;
 
       await firestore.collection("Users").doc(uid).set({
+        'firstName': userInfo['firstName'],
+        'lastName': userInfo['lastName'],
+        'fullName': '${userInfo['firstName']} ${userInfo['lastName']}',
+        'age': userInfo['age'],
+        'gender': userInfo['gender'],
         "phone": phone,
-        "type": userType,
+        "type": userInfo["type"],
         "location": {"lat": position.latitude, "lng": position.longitude},
         "status": "online",
         "createdAt": FieldValue.serverTimestamp(),
@@ -53,17 +61,18 @@ class Usersetupcubit extends Cubit<UserSetupStates> {
       String uid = auth.currentUser!.uid;
       await firestore.collection("Users").doc(uid).update({"status": "online"});
 
-      _positionStream = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10,
-        ),
-      ).listen((Position pos) async {
-        await firestore.collection("Users").doc(uid).update({
-          "location": {"lat": pos.latitude, "lng": pos.longitude},
-          "lastUpdated": FieldValue.serverTimestamp(),
-        });
-      });
+      _positionStream =
+          Geolocator.getPositionStream(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high,
+              distanceFilter: 10,
+            ),
+          ).listen((Position pos) async {
+            await firestore.collection("Users").doc(uid).update({
+              "location": {"lat": pos.latitude, "lng": pos.longitude},
+              "lastUpdated": FieldValue.serverTimestamp(),
+            });
+          });
 
       if (!isClosed) emit(UserSetupSuccessed());
     } catch (e) {
