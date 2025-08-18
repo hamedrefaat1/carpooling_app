@@ -102,7 +102,7 @@ class _GetUserInfoState extends State<GetUserInfo> {
               if (type == "driver") {
                 Navigator.pushReplacementNamed(context, "/driverMainShell");
               } else {
-                Navigator.pushReplacementNamed(context, "/homeAppRider");
+                Navigator.pushReplacementNamed(context, "/riderMainSell");
               }
             }
           },

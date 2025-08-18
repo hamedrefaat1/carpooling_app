@@ -33,7 +33,7 @@ void main() async {
       if (userType == "driver") {
         initialRoute = driverMainShell;
       } else {
-        initialRoute = homeAppRider;
+        initialRoute = riderMainShell;
       }
     }
   }

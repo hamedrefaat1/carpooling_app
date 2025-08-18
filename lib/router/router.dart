@@ -6,6 +6,7 @@ import 'package:carpooling_app/constants/constStrings.dart';
 import 'package:carpooling_app/presentation/driverScreens/Driver_main_shell.dart';
 import 'package:carpooling_app/presentation/driverScreens/home_app_driver.dart';
 import 'package:carpooling_app/presentation/riderScreens/home_app_rider.dart';
+import 'package:carpooling_app/presentation/riderScreens/rider_main_shell.dart';
 import 'package:carpooling_app/presentation/screens/OTPVerify.dart';
 import 'package:carpooling_app/presentation/screens/getUserInfo.dart';
 import 'package:carpooling_app/presentation/screens/signUp.dart';
@@ -62,12 +63,22 @@ class AppRouter {
               BlocProvider<Usersetupcubit>(
                 create: (_) => Usersetupcubit(auth, firestore),
               ),
-              BlocProvider<DriverPlacesSearchCubit>(create: (_) => DriverPlacesSearchCubit()),
+              BlocProvider<DriverPlacesSearchCubit>(
+                create: (_) => DriverPlacesSearchCubit(),
+              ),
             ],
             child: DriverMainShell(),
           ),
         );
 
+      case riderMainShell:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (_) => Usersetupcubit(auth, firestore),
+
+            child: RiderMainShell(),
+          ),
+        );
       default:
         return null;
     }
