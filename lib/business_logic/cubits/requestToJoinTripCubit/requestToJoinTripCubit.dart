@@ -14,7 +14,6 @@ class Requesttojointripcubit extends Cubit<RiderTripSearchStates> {
   Requesttojointripcubit() : super(RiderPlacesSearchInitial());
 
   // serach about places
-// serach about places
 Future<void> serachPlaces(String query, {String? proximity}) async {
   if (query.isEmpty) {
     emit(RiderPlacesSearchInitial());
@@ -31,34 +30,34 @@ Future<void> serachPlaces(String query, {String? proximity}) async {
       proximity: proximity,
     );
 
-    print('Places received: ${places.length}'); // للتديبوق
+    print('Places received: ${places.length}'); 
 
     if (places.isEmpty) {
       emit(RiderPlacesSearchError('No places found for "$query"'));
       return;
     }
 
-    // تأكد من إظهار النتائج
+   
     emit(RiderPlacesSearchSuccess(
       places: places,
-      showSuggestions: true, // مهم: إظهار الاقتراحات
+      showSuggestions: true, 
     ));
   } catch (e) {
-    print('Search error: $e'); // للتديبوق
+    print('Search error: $e'); 
     emit(RiderPlacesSearchError(e.toString()));
   }
 }
-  //  select Place from search result and  search avilable trips
 
+  //  select Place from search result and  search avilable trips
  Future<void> selectPlace(
   MapboxPlace place,
   double riderLat,
   double riderLng,
 ) async {
   _selectedPlace = place; 
-  emit(PlaceSelected(place)); // تغيير من Error إلى PlaceSelected
+  emit(PlaceSelected(place)); 
   
-  // البحث عن الرحلات
+  // search avilable trips
   await searchAvilableTrips(_selectedPlace!, riderLat, riderLng);
 }
 
@@ -107,8 +106,10 @@ Future<void> serachPlaces(String query, {String? proximity}) async {
       if (availableTrips.isEmpty) {
         emit(NoTripsFound(destination: destination));
       } else {
-        // ترتيب الرحلات حسب المسافة (الأقرب أولاً)
-        // قبل السورت، هنجهز بيانات السواقين
+
+        // Sort trips by distance from rider (nearest first)
+        
+        // before sort we will prepare Drivers data to help us to do sort 
         Map<String, Map<String, dynamic>> driversData = {};
         for (var trip in availableTrips) {
           final driverData = await _getDriverCurrentData(trip.driverId);
@@ -117,7 +118,7 @@ Future<void> serachPlaces(String query, {String? proximity}) async {
           }
         }
 
-        //  نعمل sort
+        //  do sort
         availableTrips.sort((a, b) {
           final driverDataA = driversData[a.driverId];
           final driverDataB = driversData[b.driverId];
