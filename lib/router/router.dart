@@ -2,6 +2,7 @@
 import 'package:carpooling_app/business_logic/cubits/AuthCubit/cubit_auth.dart';
 import 'package:carpooling_app/business_logic/cubits/DriverPlacesSearchCubit/driver_places_search_cubit.dart';
 import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
+import 'package:carpooling_app/business_logic/cubits/requestToJoinTripCubit/requestToJoinTripCubit.dart';
 import 'package:carpooling_app/constants/constStrings.dart';
 import 'package:carpooling_app/presentation/driverScreens/Driver_main_shell.dart';
 import 'package:carpooling_app/presentation/driverScreens/home_app_driver.dart';
@@ -73,9 +74,11 @@ class AppRouter {
 
       case riderMainShell:
         return MaterialPageRoute(
-          builder: (_) => BlocProvider(
-            create: (_) => Usersetupcubit(auth, firestore),
-
+          builder: (_) => MultiBlocProvider(
+            providers: [
+              BlocProvider(create: (_) => Usersetupcubit(auth, firestore)),
+              BlocProvider(create: (context) => Requesttojointripcubit()),
+            ],
             child: RiderMainShell(),
           ),
         );

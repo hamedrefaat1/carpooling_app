@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'package:carpooling_app/business_logic/cubits/requestToJoinTripCubit/requestToJoinTripCubit.dart';
+import 'package:carpooling_app/business_logic/cubits/requestToJoinTripCubit/requestToJoinTripStetes.dart';
+import 'package:carpooling_app/data/models/trip_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
@@ -12,7 +16,8 @@ class HomeAppRider extends StatefulWidget {
   State<HomeAppRider> createState() => _HomeAppRiderState();
 }
 
-class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver {
+class _HomeAppRiderState extends State<HomeAppRider>
+    with WidgetsBindingObserver {
   MapboxMap? _mapboxMap;
   String uid = FirebaseAuth.instance.currentUser!.uid;
   double? lat;
@@ -27,7 +32,7 @@ class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver
   @override
   void initState() {
     super.initState();
-    
+
     _searchController.addListener(() {
       // تجاهل التغيير لو إحنا بنختار مكان
       if (_isSelectingPlace) {
@@ -40,29 +45,49 @@ class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver
       _searchTimer?.cancel();
 
       if (searchText.isEmpty) {
-        // TODO: clear trip search results
+        context.read<Requesttojointripcubit>().clearSearch();
+        setState(() {
+          showSuggestions = false;
+        });
         return;
       }
 
+      // إظهار الاقتراحات فوراً عند الكتابة
+      setState(() {
+        showSuggestions = true;
+      });
+
       // تأخير البحث لمدة 500ms
       _searchTimer = Timer(const Duration(milliseconds: 500), () {
-        if (mounted && !_isSelectingPlace) {
-          // TODO: search for trips to this destination
-          print('Searching for trips to: $searchText');
+        if (mounted && !_isSelectingPlace && lat != null && lng != null) {
+          // البحث عن الأماكن أولاً
+          context.read<Requesttojointripcubit>().serachPlaces(
+            searchText,
+            proximity: '$lng,$lat',
+          );
         }
       });
     });
 
     _searchFocus.addListener(() {
       if (!_searchFocus.hasFocus) {
-        setState(() {
-          showSuggestions = false;
+        // تأخير إخفاء النتائج للسماح بالضغط عليها
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted && !_isSelectingPlace) {
+            setState(() {
+              showSuggestions = false;
+            });
+            context.read<Requesttojointripcubit>().hideSuggestions();
+          }
         });
       } else {
-        final searchText = _searchController.text.trim().toLowerCase();
-        setState(() {
-          showSuggestions = searchText.isNotEmpty;
-        });
+        final searchText = _searchController.text.trim();
+        if (searchText.isNotEmpty) {
+          setState(() {
+            showSuggestions = true;
+          });
+          context.read<Requesttojointripcubit>().showSuggestions();
+        }
       }
     });
   }
@@ -102,13 +127,40 @@ class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver
     _isSelectingPlace = true;
     _searchController.clear();
     _searchFocus.unfocus();
-    // TODO: clear trip search results
-    
+    context.read<Requesttojointripcubit>().clearSearch();
+
     Future.delayed(const Duration(milliseconds: 100), () {
       if (mounted) {
         _isSelectingPlace = false;
+        setState(() {
+          showSuggestions = false;
+        });
       }
     });
+  }
+
+  void _onPlaceSelected(place) {
+    if (lat != null && lng != null) {
+      print('Place selected: ${place.name}'); // للتديبوق
+
+      _isSelectingPlace = true;
+
+      setState(() {
+        showSuggestions = false;
+      });
+
+      _searchController.text = place.name;
+      _searchFocus.unfocus();
+
+      // البحث عن الرحلات مباشرة
+      context.read<Requesttojointripcubit>().selectPlace(place, lat!, lng!);
+
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _isSelectingPlace = false;
+        }
+      });
+    }
   }
 
   @override
@@ -123,7 +175,7 @@ class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           var userData = snapshot.data!.data() as Map<String, dynamic>;
           lat = userData["location"]["lat"];
           lng = userData["location"]["lng"];
@@ -143,23 +195,62 @@ class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver
               // UI Elements فوق الخريطة
               SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.only(
-                    top: 20,
-                    right: 20,
-                    left: 20,
-                  ),
+                  padding: const EdgeInsets.only(top: 20, right: 20, left: 20),
                   child: Column(
                     children: [
                       _buildSearchField(),
-                      
-                      // TODO: هنا هنحط نتائج البحث عن الرحلات
-                      // _buildTripResults(),
+
+                      // نتائج البحث والرحلات
+                      BlocConsumer<
+                        Requesttojointripcubit,
+                        RiderTripSearchStates
+                      >(
+                        listener: (context, state) {
+                          if (state is TripsSearchError) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(state.errorMessage),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+
+                          // Debug prints
+                          print('Current State: ${state.runtimeType}');
+                          if (state is RiderPlacesSearchSuccess) {
+                            print('Places found: ${state.places.length}');
+                          }
+                        },
+                        builder: (context, state) {
+                          return Column(
+                            children: [
+                              // عرض اقتراحات الأماكن - شرط مبسط
+                              if (showSuggestions &&
+                                  state is RiderPlacesSearchSuccess)
+                                _buildPlaceSuggestions(state.places),
+
+                              // عرض نتائج البحث عن الرحلات
+                              if (state is TripsSearchLoading)
+                                _buildLoadingTrips(),
+
+                              if (state is TripsSearchSuccess)
+                                _buildTripResults(state.availableTrips),
+
+                              if (state is NoTripsFound)
+                                _buildNoTripsFound(state.destination.name),
+
+                              if (state is PlaceSelected)
+                                _buildPlaceSelectedCard(
+                                  state.selectedPlace.name,
+                                ),
+                            ],
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ),
               ),
-
-            
             ],
           );
         },
@@ -173,86 +264,144 @@ class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver
   }
 
   Widget _buildSearchField() {
-    return Material(
-      elevation: 5,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        height: 50.h,
-        decoration: BoxDecoration(
-          color: Colors.white,
+    return BlocBuilder<Requesttojointripcubit, RiderTripSearchStates>(
+      builder: (context, state) {
+        bool isLoading = state is RiderPlacesSearchLoading;
+
+        return Material(
+          elevation: 5,
           borderRadius: BorderRadius.circular(8),
-        ),
-        child: TextField(
-          controller: _searchController,
-          focusNode: _searchFocus,
-          keyboardType: TextInputType.streetAddress,
-          textInputAction: TextInputAction.search,
-          style: const TextStyle(
-            color: Colors.black,
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-          decoration: InputDecoration(
-            hintText: "Where do you want to go?", // مختلف عن السائق
-            hintStyle: TextStyle(
-              color: Colors.grey[500],
-              fontSize: 16,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey[300]!),
+          child: Container(
+            height: 50.h,
+            decoration: BoxDecoration(
+              color: Colors.white,
               borderRadius: BorderRadius.circular(8),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Colors.blue, width: 2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            
-            suffixIcon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // TODO: إضافة loading indicator للبحث عن الرحلات
-                if (_searchController.text.isNotEmpty)
-                  IconButton(
-                    onPressed: onClearSearch,
-                    icon: Icon(
-                      Icons.clear,
-                      color: Colors.grey[600],
-                      size: 20,
-                    ),
-                  ),
-              ],
-            ),
-            prefixIcon: Icon(
-              Icons.search,
-              color: Colors.blue, // أزرق للراكب بدل من رمادي
-              size: 20,
+            child: TextField(
+              controller: _searchController,
+              focusNode: _searchFocus,
+              keyboardType: TextInputType.streetAddress,
+              textInputAction: TextInputAction.search,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+              ),
+              decoration: InputDecoration(
+                hintText: "Where do you want to go?",
+                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 16),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Colors.blue, width: 2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isLoading)
+                      Container(
+                        width: 20,
+                        height: 20,
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        child: const CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    if (_searchController.text.isNotEmpty && !isLoading)
+                      IconButton(
+                        onPressed: onClearSearch,
+                        icon: Icon(
+                          Icons.clear,
+                          color: Colors.grey[600],
+                          size: 20,
+                        ),
+                      ),
+                  ],
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: Colors.blue,
+                  size: 20,
+                ),
+              ),
+              onTapOutside: (_) {
+                _searchFocus.unfocus();
+              },
             ),
           ),
-          onTapUpOutside: (_) {
-            _searchFocus.unfocus();
-          },
-          onSubmitted: (_) {
-            // TODO: trigger search for trips
-            print('Search submitted for: ${_searchController.text}');
-          },
-          onChanged: (value){
-            if (value.isNotEmpty){
-              setState(() {
-                
-              });
-            }
-          },
-        ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlaceSuggestions(List places) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: const [
+          BoxShadow(blurRadius: 8, spreadRadius: 0, color: Colors.black12),
+        ],
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: places.length > 5 ? 5 : places.length,
+        itemBuilder: (context, index) {
+          final place = places[index];
+          return ListTile(
+            leading: const Icon(Icons.location_on, color: Colors.blue),
+            title: Text(
+              place.name,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            subtitle: Text(
+              place.fullAddress,
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () => _onPlaceSelected(place),
+          );
+        },
       ),
     );
   }
 
+  Widget _buildLoadingTrips() {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(blurRadius: 8, spreadRadius: 0, color: Colors.black12),
+        ],
+      ),
+      child: Column(
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(
+            'Searching for available trips...',
+            style: TextStyle(color: Colors.grey[600], fontSize: 16.sp),
+          ),
+        ],
+      ),
+    );
+  }
 
-  // TODO: دالة لعرض نتائج البحث عن الرحلات
-  Widget _buildTripResults() {
+  Widget _buildTripResults(List<TripModel> trips) {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
@@ -267,27 +416,208 @@ class _HomeAppRiderState extends State<HomeAppRider> with WidgetsBindingObserver
         children: [
           Padding(
             padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(Icons.directions_car, color: Colors.green),
+                const SizedBox(width: 8),
+                Text(
+                  'Available Trips (${trips.length})',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 300.h,
+            child: ListView.builder(
+              itemCount: trips.length,
+              itemBuilder: (context, index) {
+                final trip = trips[index];
+                return _buildTripCard(trip);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripCard(TripModel trip) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Driver: ${trip.driverId}', // يفضل تجيب اسم السواق
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      'To: ${trip.destination.name}',
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.green[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${trip.availableSeats} seats',
+                      style: TextStyle(
+                        color: Colors.green[800],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // TODO: إرسال طلب انضمام للرحلة
+                    _requestToJoinTrip(trip);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Request to Join'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoTripsFound(String destination) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(blurRadius: 8, spreadRadius: 0, color: Colors.black12),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.search_off, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'No trips found to',
+            style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
+          ),
+          Text(
+            destination,
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try searching for a different location or check back later',
+            style: TextStyle(fontSize: 14.sp, color: Colors.grey[500]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceSelectedCard(String placeName) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.location_on, color: Colors.blue[700]),
+          const SizedBox(width: 12),
+          Expanded(
             child: Text(
-              'Available Trips',
+              'Searching trips to: $placeName',
               style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: Colors.blue[800],
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          // TODO: ListView للرحلات المتاحة
-          Container(
-            height: 200.h,
-            child: Center(
-              child: Text(
-                'Search for trips will appear here',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14.sp,
+        ],
+      ),
+    );
+  }
+
+  void _requestToJoinTrip(TripModel trip) {
+    // TODO: إضافة logic لإرسال طلب انضمام للرحلة
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Request to Join Trip'),
+        content: Text(
+          'Do you want to request to join this trip to ${trip.destination.name}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // إرسال الطلب
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Trip request sent successfully!'),
+                  backgroundColor: Colors.green,
                 ),
-              ),
-            ),
+              );
+            },
+            child: const Text('Send Request'),
           ),
         ],
       ),
