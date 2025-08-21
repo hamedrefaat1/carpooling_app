@@ -34,7 +34,6 @@ class _HomeAppRiderState extends State<HomeAppRider>
     super.initState();
 
     _searchController.addListener(() {
-      // تجاهل التغيير لو إحنا بنختار مكان
       if (_isSelectingPlace) {
         return;
       }
@@ -52,15 +51,12 @@ class _HomeAppRiderState extends State<HomeAppRider>
         return;
       }
 
-      // إظهار الاقتراحات فوراً عند الكتابة
       setState(() {
         showSuggestions = true;
       });
 
-      // تأخير البحث لمدة 500ms
       _searchTimer = Timer(const Duration(milliseconds: 500), () {
         if (mounted && !_isSelectingPlace && lat != null && lng != null) {
-          // البحث عن الأماكن أولاً
           context.read<Requesttojointripcubit>().serachPlaces(
             searchText,
             proximity: '$lng,$lat',
@@ -141,7 +137,7 @@ class _HomeAppRiderState extends State<HomeAppRider>
 
   void _onPlaceSelected(place) {
     if (lat != null && lng != null) {
-      print('Place selected: ${place.name}'); // للتديبوق
+      print('Place selected: ${place.name}');
 
       _isSelectingPlace = true;
 
@@ -152,7 +148,7 @@ class _HomeAppRiderState extends State<HomeAppRider>
       _searchController.text = place.name;
       _searchFocus.unfocus();
 
-      // البحث عن الرحلات مباشرة
+      // to search a vilaible trips
       context.read<Requesttojointripcubit>().selectPlace(place, lat!, lng!);
 
       Future.delayed(const Duration(milliseconds: 100), () {
@@ -182,7 +178,6 @@ class _HomeAppRiderState extends State<HomeAppRider>
 
           return Stack(
             children: [
-              // الخريطة
               MapWidget(
                 styleUri: MapboxStyles.DARK,
                 cameraOptions: CameraOptions(
@@ -192,7 +187,6 @@ class _HomeAppRiderState extends State<HomeAppRider>
                 onMapCreated: _onMapCreated,
               ),
 
-              // UI Elements فوق الخريطة
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 20, right: 20, left: 20),
@@ -200,7 +194,6 @@ class _HomeAppRiderState extends State<HomeAppRider>
                     children: [
                       _buildSearchField(),
 
-                      // نتائج البحث والرحلات
                       BlocConsumer<
                         Requesttojointripcubit,
                         RiderTripSearchStates
@@ -215,7 +208,6 @@ class _HomeAppRiderState extends State<HomeAppRider>
                             );
                           }
 
-                          // Debug prints
                           print('Current State: ${state.runtimeType}');
                           if (state is RiderPlacesSearchSuccess) {
                             print('Places found: ${state.places.length}');
@@ -224,12 +216,10 @@ class _HomeAppRiderState extends State<HomeAppRider>
                         builder: (context, state) {
                           return Column(
                             children: [
-                              // عرض اقتراحات الأماكن - شرط مبسط
                               if (showSuggestions &&
                                   state is RiderPlacesSearchSuccess)
                                 _buildPlaceSuggestions(state.places),
 
-                              // عرض نتائج البحث عن الرحلات
                               if (state is TripsSearchLoading)
                                 _buildLoadingTrips(),
 
@@ -469,7 +459,7 @@ class _HomeAppRiderState extends State<HomeAppRider>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Driver: ${trip.driverId}', // يفضل تجيب اسم السواق
+                      'Driver: ${trip.driverId}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
@@ -510,7 +500,7 @@ class _HomeAppRiderState extends State<HomeAppRider>
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: إرسال طلب انضمام للرحلة
+                   // send request to join trip 
                     _requestToJoinTrip(trip);
                   },
                   style: ElevatedButton.styleFrom(
@@ -593,34 +583,92 @@ class _HomeAppRiderState extends State<HomeAppRider>
   }
 
   void _requestToJoinTrip(TripModel trip) {
-    // TODO: إضافة logic لإرسال طلب انضمام للرحلة
+     final cubit = context.read<Requesttojointripcubit>();
     showDialog(
+
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Request to Join Trip'),
-        content: Text(
-          'Do you want to request to join this trip to ${trip.destination.name}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
+      builder: (context) {
+        return BlocConsumer<Requesttojointripcubit, RiderTripSearchStates>(
+          bloc: cubit,
+          listener: (context, state) {
+            if (state is JoinRequestSuccess) {
               Navigator.pop(context);
-              // إرسال الطلب
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Trip request sent successfully!'),
                   backgroundColor: Colors.green,
                 ),
               );
-            },
-            child: const Text('Send Request'),
-          ),
-        ],
-      ),
+            } else if (state is JoinRequestError) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            } else if (state is AlreadyRequestedJoin) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            } else if (state is TripFull) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.orange,
+                ),
+              );
+            }
+          },
+          builder: (context, state) {
+            return AlertDialog(
+              title: Text('Request to Join Trip'),
+              content: Column(
+         mainAxisSize: MainAxisSize.min,
+                children: [
+                  if(state is JoinRequestLoading)
+                    Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16.h,),
+                        Text('Sending request...'),
+                      ],
+                    )
+                  else 
+                   Text(
+                  'Do you want to request to join this trip to ${trip.destination.name}?',
+                ),
+        
+                ],
+                
+              ),
+             actions: [
+              if(state is JoinRequestLoading == false)
+                TextButton(
+                  onPressed:()=> Navigator.pop(context), 
+                  child: Text("Cancle")),
+        
+              
+               ElevatedButton(
+                onPressed: (){
+                  cubit.sendRquestToJoinTrip(trip.id!);
+                },
+               style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white
+               ),
+                 child: Text("Send Request")
+                 )    
+             ],
+            );
+          },
+        );
+      },
     );
   }
 }

@@ -144,138 +144,136 @@
 //     super.dispose();
 //   }
 // }
+import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
+class Homeapp extends StatefulWidget {
+  const Homeapp({super.key});
 
-// import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+  @override
+  State<Homeapp> createState() => _HomeappState();
+}
 
-// class Homeapp extends StatefulWidget {
-//   const Homeapp({super.key});
+class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
+  MapboxMap? _mapboxMap;
+  String uid = FirebaseAuth.instance.currentUser!.uid;
+  late Usersetupcubit userSetupCubit;
+  double? lat;
+  double? lng;
 
-//   @override
-//   State<Homeapp> createState() => _HomeappState();
-// }
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    userSetupCubit = context.read<Usersetupcubit>();
+    userSetupCubit.stratTracking();
+  }
 
-// class _HomeappState extends State<Homeapp> with WidgetsBindingObserver {
-//   MapboxMap? _mapboxMap;
-//   String uid = FirebaseAuth.instance.currentUser!.uid;
-//   late Usersetupcubit userSetupCubit;
-//   double? lat;
-//   double? lng;
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     WidgetsBinding.instance.addObserver(this);
-//     userSetupCubit = context.read<Usersetupcubit>();
-//     userSetupCubit.stratTracking();
-//   }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
 
-//   @override
-//   void dispose() {
-//     WidgetsBinding.instance.removeObserver(this);
-//     super.dispose();
-//   }
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        // التطبيق اتقفل أو راح في الخلفية
+        userSetupCubit.stopTracking();
+        break;
+      case AppLifecycleState.resumed:
+        // التطبيق رجع تاني
+        userSetupCubit.stratTracking();
+        break;
+      default:
+        break;
+    }
+  }
 
-//   @override
-//   void didChangeAppLifecycleState(AppLifecycleState state) {
-//     super.didChangeAppLifecycleState(state);
+  void _goToMyLocation() {
+    if (_mapboxMap != null && lat != null && lng != null) {
+      _mapboxMap!.easeTo(
+        CameraOptions(center: Point(coordinates: Position(lng!, lat!))),
+        MapAnimationOptions(duration: 800),
+      );
+    }
+  }
 
-//     switch (state) {
-//       case AppLifecycleState.paused:
-//       case AppLifecycleState.detached:
-//         // التطبيق اتقفل أو راح في الخلفية
-//         userSetupCubit.stopTracking();
-//         break;
-//       case AppLifecycleState.resumed:
-//         // التطبيق رجع تاني
-//         userSetupCubit.stratTracking();
-//         break;
-//       default:
-//         break;
-//     }
-//   }
+  Future<void> _onMapCreated(controller) async {
+    _mapboxMap = controller;
 
-//   void _goToMyLocation() {
-//     if (_mapboxMap != null && lat != null && lng != null) {
-//       _mapboxMap!.easeTo(
-//         CameraOptions(center: Point(coordinates: Position(lng!, lat!))),
-//         MapAnimationOptions(duration: 800),
-//       );
-//     }
-//   }
+    // تفعيل مؤشر الموقع النابض
+    await _mapboxMap!.location.updateSettings(
+      LocationComponentSettings(
+        enabled: true,
+        pulsingEnabled: true,
+        showAccuracyRing: true,
+      ),
+    );
 
-//   Future<void> _onMapCreated(controller) async {
-//     _mapboxMap = controller;
+    // أول ما يفتح يروح على موقعي بزوم مناسب
+    _goToMyLocation();
+  }
 
-//     // تفعيل مؤشر الموقع النابض
-//     await _mapboxMap!.location.updateSettings(
-//       LocationComponentSettings(
-//         enabled: true,
-//         pulsingEnabled: true,
-//         showAccuracyRing: true,
-//       ),
-//     );
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection("Users")
+            .doc(uid)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          var userData = snapshot.data!.data() as Map<String, dynamic>;
+          lat = userData["location"]["lat"];
+          lng = userData["location"]["lng"];
 
-//     // أول ما يفتح يروح على موقعي بزوم مناسب
-//     _goToMyLocation();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: StreamBuilder(
-//         stream: FirebaseFirestore.instance
-//             .collection("Users")
-//             .doc(uid)
-//             .snapshots(),
-//         builder: (context, snapshot) {
-//           if (!snapshot.hasData) {
-//             return const Center(child: CircularProgressIndicator());
-//           }
-//           var userData = snapshot.data!.data() as Map<String, dynamic>;
-//           lat = userData["location"]["lat"];
-//           lng = userData["location"]["lng"];
-
-//           return Stack(
-//             children: [
-//               // this is MAP
-//               MapWidget(
-//                 styleUri: MapboxStyles.DARK,
-//                 cameraOptions: CameraOptions(
-//                   center: Point(coordinates: Position(lng!, lat!)),
-//                   zoom: 17,
-//                 ),
-//                 onMapCreated: _onMapCreated,
-//               ),
+          return Stack(
+            children: [
+              // this is MAP
+              MapWidget(
+                styleUri: MapboxStyles.DARK,
+                cameraOptions: CameraOptions(
+                  center: Point(coordinates: Position(lng!, lat!)),
+                  zoom: 17,
+                ),
+                onMapCreated: _onMapCreated,
+              ),
            
-//            // SEARCH TEXT FILED
-//            SafeArea(
-//             child: Material(
-//               elevation: 5,
-//               borderRadius:BorderRadius.circular(8) ,
-//               child: Container(
-//                          decoration: BoxDecoration(
-//                           color: Colors.white ,
-//                           borderRadius: BorderRadius.circular(8),
-//                          ),
-//               ),
-//             )
+           // SEARCH TEXT FILED
+           SafeArea(
+            child: Material(
+              elevation: 5,
+              borderRadius:BorderRadius.circular(8) ,
+              child: Container(
+                         decoration: BoxDecoration(
+                          color: Colors.white ,
+                          borderRadius: BorderRadius.circular(8),
+                         ),
+              ),
+            )
             
-//             )
+            )
 
-//             ],
-//           );
-//         },
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: _goToMyLocation,
-//         child: const Icon(Icons.my_location),
-//       ),
-//     );
-//   }
-// }
+            ],
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _goToMyLocation,
+        child: const Icon(Icons.my_location),
+      ),
+    );
+  }
+}
