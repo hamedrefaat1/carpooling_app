@@ -8,13 +8,21 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 late String initialRoute;
 late String userType;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  
+  await dotenv.load(fileName: ".env");
+
+  
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // determine initial route based on authentication state
   User? user = await FirebaseAuth.instance.authStateChanges().first;
 
   if (user == null) {
@@ -24,11 +32,12 @@ void main() async {
         .collection("Users")
         .doc(user.uid)
         .get();
+
     if (!userDoc.exists) {
       initialRoute = getUserInfo;
     } else {
-      Map<String, dynamic> userDate = userDoc.data() as Map<String, dynamic>;
-      userType = userDate["type"];
+      Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+      userType = userData["type"];
 
       if (userType == "driver") {
         initialRoute = driverMainShell;
@@ -38,17 +47,15 @@ void main() async {
     }
   }
 
-  //await setUp();
-  MapboxOptions.setAccessToken(
-    "***********************************************************************************",
-  );
+  
+  MapboxOptions.setAccessToken(dotenv.env['MAPBOX_ACCESS_TOKEN']!);
+
   runApp(const CarpoolingApp());
 }
 
 class CarpoolingApp extends StatelessWidget {
   const CarpoolingApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(

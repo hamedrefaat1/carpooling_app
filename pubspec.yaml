@@ -43,7 +43,7 @@ dependencies:
   cloud_firestore: ^6.0.0
   mapbox_maps_flutter: ^2.10.0
   permission_handler: ^11.0.1
-  flutter_dotenv: ^5.2.1
+  flutter_dotenv: ^6.0.0
   http: ^1.5.0
 
 dev_dependencies:
