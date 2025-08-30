@@ -23,7 +23,7 @@ class _DriverMainShellState extends State<DriverMainShell>
 
   @override
   void initState() {
-    pages = [DriverProfileScreen(), HomeappDriver(), TripsDriverScreen()];
+    pages = [DriverProfileScreen(), HomeappDriver(), TripsDriverScreen() , ];
 
     WidgetsBinding.instance.addObserver(this);
     usersetupcubit = context.read<Usersetupcubit>();

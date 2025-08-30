@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:carpooling_app/data/models/mapbox_place.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class MapboxSrearchplacesapi {
-  static const String _accessToken = 'REMOVED';
+  static String get _accessToken => dotenv.env['MAPBOX_ACCESS_TOKEN'] ?? '';
   static const String _baseUrl =
       'https://api.mapbox.com/geocoding/v5/mapbox.places';
 

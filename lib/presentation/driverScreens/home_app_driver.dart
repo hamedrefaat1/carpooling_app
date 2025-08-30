@@ -141,121 +141,123 @@ class _HomeappDriverState extends State<HomeappDriver> with WidgetsBindingObserv
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection("Users")
-            .doc(uid)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          var userData = snapshot.data!.data() as Map<String, dynamic>;
-          lat = userData["location"]["lat"];
-          lng = userData["location"]["lng"];
-
-          return BlocListener<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
-            listenWhen: (previous, current) {
-              return current != previous;
-            },
-            listener: (context, state) {
-              if (state is DriverTripPublished) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.green,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-                _searchController.clear();
-              } else if (state is DriverTripPublishError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.erorrMessage),
-                    backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              } else if (state is DriverPlacesSearchError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.erorrMessage),
-                    backgroundColor: Colors.orange,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              }
-            },
-            child: Stack(
-              children: [
-                MapWidget(
-                  styleUri: MapboxStyles.DARK,
-                  cameraOptions: CameraOptions(
-                    center: Point(coordinates: Position(lng!, lat!)),
-                    zoom: 17,
-                  ),
-                  onMapCreated: _onMapCreated,
-                ),
-
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      top: 20,
-                      right: 20,
-                      left: 20,
+    return SafeArea(
+      child: Scaffold(
+        body: StreamBuilder(
+          stream: FirebaseFirestore.instance
+              .collection("Users")
+              .doc(uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            var userData = snapshot.data!.data() as Map<String, dynamic>;
+            lat = userData["location"]["lat"];
+            lng = userData["location"]["lng"];
+      
+            return BlocListener<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
+              listenWhen: (previous, current) {
+                return current != previous;
+              },
+              listener: (context, state) {
+                if (state is DriverTripPublished) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.green,
+                      duration: const Duration(seconds: 3),
                     ),
-                    child: Column(
-                      children: [
-                        _buildSearchField(),
-
-                        BlocBuilder<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
-                          builder: (context, state) {
-                            // إضافة debug prints لفهم المشكلة
-                            print("Current state: ${state.runtimeType}");
-                            
-                            if (state is DriverPlacesSearchSuccess) {
-                              print("Places count: ${state.places.length}");
-                              print("Show suggestions: ${state.showSuggestions}");
-                              return _buildSuggestionsList(state.places);
-                            } else if (state is PlaceSelected) {
-                              print("Place selected: ${state.selectedPlace.name}");
-                              return _buildSelectedPlace(state.selectedPlace);
-                            } else if (state is DriverPlacesSearchLoading) {
-                              print("Loading...");
-                              return Container(
-                                margin: const EdgeInsets.only(top: 8),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    CircularProgressIndicator(strokeWidth: 2),
-                                    SizedBox(width: 16),
-                                    Text("Searching..."),
-                                  ],
-                                ),
-                              );
-                            } else if (state is DriverPlacesSearchError) {
-                              print("Error: ${state.erorrMessage}");
-                            }
-                            return const SizedBox.shrink();
-                          },
-                        ),
-                      ],
+                  );
+                  _searchController.clear();
+                } else if (state is DriverTripPublishError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.erorrMessage),
+                      backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 3),
+                    ),
+                  );
+                } else if (state is DriverPlacesSearchError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.erorrMessage),
+                      backgroundColor: Colors.orange,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              child: Stack(
+                children: [
+                  MapWidget(
+                    styleUri: MapboxStyles.DARK,
+                    cameraOptions: CameraOptions(
+                      center: Point(coordinates: Position(lng!, lat!)),
+                      zoom: 17,
+                    ),
+                    onMapCreated: _onMapCreated,
+                  ),
+      
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: 20,
+                        right: 20,
+                        left: 20,
+                      ),
+                      child: Column(
+                        children: [
+                          _buildSearchField(),
+      
+                          BlocBuilder<DriverPlacesSearchCubit, DriverPlacesSearchStates>(
+                            builder: (context, state) {
+                              // إضافة debug prints لفهم المشكلة
+                              print("Current state: ${state.runtimeType}");
+                              
+                              if (state is DriverPlacesSearchSuccess) {
+                                print("Places count: ${state.places.length}");
+                                print("Show suggestions: ${state.showSuggestions}");
+                                return _buildSuggestionsList(state.places);
+                              } else if (state is PlaceSelected) {
+                                print("Place selected: ${state.selectedPlace.name}");
+                                return _buildSelectedPlace(state.selectedPlace);
+                              } else if (state is DriverPlacesSearchLoading) {
+                                print("Loading...");
+                                return Container(
+                                  margin: const EdgeInsets.only(top: 8),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                      SizedBox(width: 16),
+                                      Text("Searching..."),
+                                    ],
+                                  ),
+                                );
+                              } else if (state is DriverPlacesSearchError) {
+                                print("Error: ${state.erorrMessage}");
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _goToMyLocation,
-        child: const Icon(Icons.my_location),
+                ],
+              ),
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _goToMyLocation,
+          child: const Icon(Icons.my_location),
+        ),
       ),
     );
   }

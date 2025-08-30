@@ -1,10 +1,12 @@
 // تعديل AppRouter لاستخدام static instance
 import 'package:carpooling_app/business_logic/cubits/AuthCubit/cubit_auth.dart';
 import 'package:carpooling_app/business_logic/cubits/DriverPlacesSearchCubit/driver_places_search_cubit.dart';
+import 'package:carpooling_app/business_logic/cubits/DriverTripManagement/DriverTripManagementCubit.dart';
 import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
 import 'package:carpooling_app/business_logic/cubits/requestToJoinTripCubit/requestToJoinTripCubit.dart';
 import 'package:carpooling_app/constants/constStrings.dart';
 import 'package:carpooling_app/presentation/driverScreens/Driver_main_shell.dart';
+import 'package:carpooling_app/presentation/driverScreens/Trip_Requests.dart';
 import 'package:carpooling_app/presentation/driverScreens/home_app_driver.dart';
 import 'package:carpooling_app/presentation/riderScreens/home_app_rider.dart';
 import 'package:carpooling_app/presentation/riderScreens/rider_main_shell.dart';
@@ -67,6 +69,7 @@ class AppRouter {
               BlocProvider<DriverPlacesSearchCubit>(
                 create: (_) => DriverPlacesSearchCubit(),
               ),
+              BlocProvider(create: (context) => DriverTripManagementCubit()),
             ],
             child: DriverMainShell(),
           ),
@@ -80,6 +83,14 @@ class AppRouter {
               BlocProvider(create: (context) => Requesttojointripcubit()),
             ],
             child: RiderMainShell(),
+          ),
+        );
+
+      case tripRequests:
+        return MaterialPageRoute(
+          builder: (_) => BlocProvider(
+            create: (context) => DriverTripManagementCubit(),
+            child: TripRequests(tripId: settings.arguments as String),
           ),
         );
       default:

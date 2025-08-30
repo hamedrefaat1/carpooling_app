@@ -19,7 +19,7 @@ class JoinRequest {
     this.responsedAt,
   });
 
-  factory JoinRequest.fromJson(Map<String, dynamic> json) {
+  factory JoinRequest.fromJson(Map<String, dynamic> json, {required String documentId}) {
     return JoinRequest(
       id: json['id'] ?? '',
       riderId: json['riderId'] ?? '',
