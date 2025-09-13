@@ -1,5 +1,6 @@
 import 'package:carpooling_app/constants/constStrings.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';
+import 'package:carpooling_app/data/api_services/NotificationService.dart';
 import 'package:carpooling_app/firebase_options.dart';
 import 'package:carpooling_app/router/router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,17 +17,17 @@ late String userType;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  
   await dotenv.load(fileName: ".env");
 
-  
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await NotificationService.initialize();
 
   // determine initial route based on authentication state
   User? user = await FirebaseAuth.instance.authStateChanges().first;
 
   if (user == null) {
-    initialRoute = signUpScreen;
+    initialRoute = splashScreen;
   } else {
     DocumentSnapshot userDoc = await FirebaseFirestore.instance
         .collection("Users")
@@ -47,7 +48,6 @@ void main() async {
     }
   }
 
-  
   MapboxOptions.setAccessToken(dotenv.env['MAPBOX_ACCESS_TOKEN']!);
 
   runApp(const CarpoolingApp());
@@ -62,12 +62,12 @@ class CarpoolingApp extends StatelessWidget {
       designSize: const Size(360, 690),
       builder: (_, child) {
         return MaterialApp(
-          theme: AppTheme.lightTheme,
+          theme: AppTheme.darkTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: ThemeMode.light,
           debugShowCheckedModeBanner: false,
           onGenerateRoute: AppRouter().generateRoute,
-          initialRoute: initialRoute,
+          initialRoute: splashScreen,
           home: child,
         );
       },

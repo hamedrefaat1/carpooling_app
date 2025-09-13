@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:carpooling_app/business_logic/cubits/requestToJoinTripCubit/requestToJoinTripStetes.dart';
+import 'package:carpooling_app/data/api_services/NotificationService.dart';
 import 'package:carpooling_app/data/models/join_request.dart';
 import 'package:carpooling_app/data/models/mapbox_place.dart';
 import 'package:carpooling_app/data/models/trip_model.dart';
@@ -228,13 +229,25 @@ class Requesttojointripcubit extends Cubit<RiderTripSearchStates> {
         riderPhoneNumber: riderData["phoneNumber"] ?? '',
         riderLocation: riderData['location'] ?? {},
         status: "pending",
-        requsetedAt: DateTime.now(),
+        requestedAt: DateTime.now()
       );
 
      // save joinRequest in firebasefireStore
       await joinRequestRef.set(joinRequest.toJson());
 
-      // TODO: Send notification to driver (we'll implement this later)
+      // Send notification to driver 
+       await NotificationService.sendNotificationToUser(
+        userId: tripData["driverId"],
+        title: "طلب انضمام جديد",
+        body: "${riderData["name"] ?? "Unknown"} يريد الانضمام إلى رحلتك",
+        data: {
+          "type": "join_request",
+          "tripId": tripId,
+          "riderId": currentUserId,
+          "riderName": riderData["name"] ?? "Unknown",
+        },
+      );
+
 
       emit(JoinRequestSuccess(tripId : tripId));
     } catch (e) {

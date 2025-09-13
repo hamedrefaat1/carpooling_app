@@ -1,5 +1,6 @@
 import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupCubit.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';
+import 'package:carpooling_app/presentation/driverScreens/Trip_Requests.dart';
 import 'package:carpooling_app/presentation/driverScreens/driver_profile_screen.dart';
 import 'package:carpooling_app/presentation/driverScreens/home_app_driver.dart';
 import 'package:carpooling_app/presentation/driverScreens/trips_driver_screen.dart';
@@ -21,10 +22,24 @@ class _DriverMainShellState extends State<DriverMainShell>
 
   late List<Widget> pages;
 
+  // مفاتيح منفصلة لكل Navigator
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
+
   @override
   void initState() {
-    pages = [DriverProfileScreen(), HomeappDriver(), TripsDriverScreen() , ];
-
+    pages = [
+      _buildNavigator(0, DriverProfileScreen()),
+      _buildNavigator(1, HomeappDriver()),
+      _buildNavigator(2, TripsDriverScreen(), {
+        "/TripRequests": (context) => TripRequests(
+          tripId: ModalRoute.of(context)!.settings.arguments as String,
+        ),
+      }),
+    ];
     WidgetsBinding.instance.addObserver(this);
     usersetupcubit = context.read<Usersetupcubit>();
     usersetupcubit.stratTracking();
@@ -38,6 +53,28 @@ class _DriverMainShellState extends State<DriverMainShell>
     super.dispose();
   }
 
+  Widget _buildNavigator(
+    int index,
+    Widget child, [
+    Map<String, WidgetBuilder>? routes,
+  ]) {
+    return Navigator(
+      key: _navigatorKeys[index],
+      onGenerateRoute: (settings) {
+        if (settings.name == Navigator.defaultRouteName) {
+          return MaterialPageRoute(builder: (_) => child);
+        }
+        if (routes != null && routes.containsKey(settings.name)) {
+          return MaterialPageRoute(
+            builder: routes[settings.name]!,
+            settings: settings,
+          );
+        }
+        return null;
+      },
+    );
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
@@ -48,7 +85,6 @@ class _DriverMainShellState extends State<DriverMainShell>
         break;
       case AppLifecycleState.resumed:
         usersetupcubit.stratTracking();
-
         break;
       default:
         break;
@@ -63,32 +99,35 @@ class _DriverMainShellState extends State<DriverMainShell>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: IndexedStack(index: currentIndex, children: pages),
-      bottomNavigationBar: __buildBottomNavBar(),
+      bottomNavigationBar: __buildBottomNavBar(isDarkMode),
     );
   }
 
-  Widget __buildBottomNavBar() {
+  Widget __buildBottomNavBar(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
             blurRadius: 10,
             spreadRadius: 0,
             offset: const Offset(0, -5),
           ),
         ],
       ),
-
       child: BottomNavigationBar(
         currentIndex: currentIndex,
         onTap: onNavBarTapped,
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
+        backgroundColor: isDarkMode ? AppColors.darkSurface : AppColors.surface,
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey[900],
+        unselectedItemColor: isDarkMode
+            ? AppColors.darkTextSecondary
+            : AppColors.textSecondary,
         selectedLabelStyle: TextStyle(
           fontSize: 12.sp,
           fontWeight: FontWeight.w600,
@@ -98,14 +137,12 @@ class _DriverMainShellState extends State<DriverMainShell>
           fontWeight: FontWeight.w400,
         ),
         items: [
-       
-
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
             label: "Profile",
           ),
-             BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
             activeIcon: Icon(Icons.home),
             label: "Home",

@@ -5,7 +5,7 @@ class JoinRequest {
   final String riderPhoneNumber;
   final Map<String, dynamic> riderLocation;
   final String status;
-  final DateTime requsetedAt;
+  final DateTime requestedAt; // fixed typo: requsetedAt
   final DateTime? responsedAt;
 
   JoinRequest({
@@ -15,19 +15,20 @@ class JoinRequest {
     required this.riderPhoneNumber,
     required this.riderLocation,
     required this.status,
-    required this.requsetedAt,
+    required this.requestedAt, // fixed typo
     this.responsedAt,
   });
 
+  // Fixed factory method - removed extra String id parameter
   factory JoinRequest.fromJson(Map<String, dynamic> json, {required String documentId}) {
     return JoinRequest(
-      id: json['id'] ?? '',
+      id: documentId, // use documentId instead of json['id']
       riderId: json['riderId'] ?? '',
       ridername: json['ridername'] ?? '',
       riderPhoneNumber: json['riderPhoneNumber'] ?? '',
       riderLocation: json['riderLocation'] ?? {},
       status: json['status'] ?? 'pending',
-      requsetedAt: json["requestedAt"]?.toDate() ?? DateTime.now(),
+      requestedAt: json["requestedAt"]?.toDate() ?? DateTime.now(), // fixed typo
       responsedAt: json["responsedAt"]?.toDate(),
     );
   }
@@ -40,7 +41,7 @@ class JoinRequest {
       'riderPhoneNumber': riderPhoneNumber,
       'riderLocation': riderLocation,
       'status': status,
-      'requestedAt': requsetedAt,
+      'requestedAt': requestedAt, // fixed typo
       'responsedAt': responsedAt,
     };
   }
@@ -58,12 +59,12 @@ class JoinRequest {
     return JoinRequest(
       id: id ?? this.id,
       riderId: riderId ?? this.riderId,
-      ridername: ridername,
+      ridername: riderName ?? this.ridername, 
       riderPhoneNumber: riderPhoneNumber ?? this.riderPhoneNumber,
       riderLocation: riderLocation ?? this.riderLocation,
       status: status ?? this.status,
-      requsetedAt: requestedAt ?? requsetedAt,
-      responsedAt: respondedAt ?? responsedAt,
+      requestedAt: requestedAt ?? this.requestedAt, 
+      responsedAt: respondedAt ?? this.responsedAt,
     );
   }
 }

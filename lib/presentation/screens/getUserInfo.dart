@@ -47,7 +47,7 @@ class _GetUserInfoState extends State<GetUserInfo> {
         'type': _selectedUserType!,
       };
 
-      // بعت المعلومات للـ Cubit
+      
       context.read<Usersetupcubit>().requestLocationAndSetupWithInfo(userInfo);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,7 +78,7 @@ class _GetUserInfoState extends State<GetUserInfo> {
               Navigator.of(
                 context,
                 rootNavigator: true,
-              ).pop(); // أقفل الـ loading dialog
+              ).pop(); // loading dialog
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.error),
@@ -90,7 +90,7 @@ class _GetUserInfoState extends State<GetUserInfo> {
               Navigator.of(
                 context,
                 rootNavigator: true,
-              ).pop(); // أقفل الـ loading dialog
+              ).pop(); // loading dialog
 
               final uid = FirebaseAuth.instance.currentUser!.uid;
               DocumentSnapshot doc = await FirebaseFirestore.instance
@@ -138,7 +138,7 @@ class _GetUserInfoState extends State<GetUserInfo> {
 
                           Gap(16.h),
 
-                          // الاسم الأخير
+                          // last name
                           _buildTextField(
                             controller: _lastNameController,
                             label: 'Last Name',
@@ -153,7 +153,7 @@ class _GetUserInfoState extends State<GetUserInfo> {
 
                           Gap(16.h),
 
-                          // العمر
+                          // age
                           _buildTextField(
                             controller: _ageController,
                             label: 'Age',
@@ -173,17 +173,17 @@ class _GetUserInfoState extends State<GetUserInfo> {
 
                           Gap(20.h),
 
-                          // النوع (ذكر/أنثى)
+                          // ginger
                           _buildGenderSelection(),
 
                           Gap(20.h),
 
-                          // نوع المستخدم (سواق/راكب)
+                          //  user type -> driver or rider
                           _buildUserTypeSelection(),
 
                           Gap(30.h),
 
-                          // زر التأكيد
+                          // continue botton
                           _buildSubmitButton(),
 
                           Gap(20.h),

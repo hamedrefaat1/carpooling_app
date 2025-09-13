@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:carpooling_app/business_logic/cubits/UserSetupCubit/UserSetupStates.dart';
+import 'package:carpooling_app/data/api_services/NotificationService.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,6 +13,8 @@ class Usersetupcubit extends Cubit<UserSetupStates> {
   StreamSubscription<Position>? _positionStream;
 
   Usersetupcubit(this.auth, this.firestore) : super(UserSetupIntial());
+  
+  String get currentUserId => FirebaseAuth.instance.currentUser!.uid;
 
   Future<void> requestLocationAndSetupWithInfo(
     Map<String, dynamic> userInfo,
@@ -46,6 +49,8 @@ class Usersetupcubit extends Cubit<UserSetupStates> {
         "status": "online",
         "createdAt": FieldValue.serverTimestamp(),
       });
+      
+      await NotificationService.saveUserToken(currentUserId);
 
       if (!isClosed) emit(UserSetupSuccessed());
     } catch (e) {

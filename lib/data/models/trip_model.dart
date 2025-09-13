@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class TripModel {
   final String? id;
   final String driverId;
-  final DriverLoaction driverLoaction;
+  final DriverLocation driverLocation; 
   final MapboxPlace destination;
   final String status;
   final List<String> passengers;
@@ -17,19 +17,20 @@ class TripModel {
     required this.driverId,
     this.createdAt,
     required this.destination,
-    required this.driverLoaction,
+    required this.driverLocation,
     required this.status,
     required this.availableSeats,
     required this.maxPassengers,
     required this.passengers,
   });
 
+  // Fixed factory method - removed extra String id parameter
   factory TripModel.fromJson(Map<String, dynamic> json, {String? documentId}) {
     return TripModel(
       id: documentId,
       driverId: json["driverId"] ?? '',
       destination: MapboxPlace.fromFirestore(json["destination"] ?? {}),
-      driverLoaction: DriverLoaction.fromJson(json["driverLocation"] ?? {}),
+      driverLocation: DriverLocation.fromJson(json["driverLocation"] ?? {}), // fixed typo
       createdAt: json['createdAt'] != null
           ? (json['createdAt'] as Timestamp).toDate()
           : null,
@@ -39,10 +40,11 @@ class TripModel {
       status: json['status'] ?? 'active',
     );
   }
+
   Map<String, dynamic> toJson() {
     return {
       'driverId': driverId,
-      'driverLocation': driverLoaction.toJson(),
+      'driverLocation': driverLocation.toJson(),
       'destination': destination.toJson(),
       'status': status,
       'createdAt': createdAt != null
@@ -55,14 +57,15 @@ class TripModel {
   }
 }
 
-class DriverLoaction {
+
+class DriverLocation {
   double? lat;
   double? lng;
 
-  DriverLoaction({required this.lat, required this.lng});
+  DriverLocation({required this.lat, required this.lng});
 
-  factory DriverLoaction.fromJson(Map<String, dynamic> json) {
-    return DriverLoaction(
+  factory DriverLocation.fromJson(Map<String, dynamic> json) {
+    return DriverLocation(
       lat: (json["lat"] ?? 0.0).toDouble(),
       lng: (json["lng"] ?? 0.0).toDouble(),
     );

@@ -32,10 +32,9 @@ class Signup extends StatelessWidget {
                   children: [
                     Text(
                       "Welcome to the Carpooling App",
-                      style: Theme.of(context).textTheme.headlineLarge
-                          ?.copyWith(
-                            fontSize: 22.sp, // بدل من headlineLarge
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineLarge?.copyWith(fontSize: 22.sp),
                     ),
                     SizedBox(height: 20.h),
                     Text(
@@ -150,20 +149,16 @@ class Signup extends StatelessWidget {
                               String phoneText = phoneNumber.text.trim();
                               String formattedPhone;
 
-                              // إزالة أي مسافات أو رموز
                               phoneText = phoneText.replaceAll(
                                 RegExp(r'[^\d]'),
                                 '',
                               );
 
                               if (phoneText.startsWith('01')) {
-                                // من 01xxxxxxxx إلى +201xxxxxxxx
                                 formattedPhone = '+2$phoneText';
                               } else if (phoneText.startsWith('1')) {
-                                // من 1xxxxxxx إلى +201xxxxxxx
                                 formattedPhone = '+20$phoneText';
                               } else {
-                                // إضافة +20 مباشرة
                                 formattedPhone = '+20$phoneText';
                               }
 
