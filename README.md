@@ -1,16 +1,67 @@
-# carpooling_app
+# 🚗 Carpooling App
 
-A new Flutter project.
+Carpooling App is a **Flutter-based mobile application** that connects drivers and passengers to share rides easily and efficiently.  
+It helps reduce travel costs, minimize traffic, and promote eco-friendly transportation by enabling ride-sharing in real time.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## ✨ Features
 
-A few resources to get you started if this is your first Flutter project:
+- 🔐 **Authentication**
+  - Firebase Authentication (Email/Password, Phone Number, Google Sign-in)
+- 🧑‍🤝‍🧑 **User Roles**
+  - Driver: Create and manage trips
+  - Passenger: Browse and join trips
+- 📍 **Live Location**
+  - Track driver and passenger location on Google Maps
+- 📅 **Trip Management**
+  - Drivers can create, update, and delete trips
+  - Passengers can request to join trips
+- 🔔 **Push Notifications**
+  - Powered by Firebase Cloud Messaging (FCM)
+- 🎨 **Modern UI**
+  - Light/Dark mode support
+  - Custom themes
+- ⚡ **Real-time Updates**
+  - Integrated with Firebase Firestore for instant data sync
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🛠️ Tech Stack
+
+- **Frontend:** [Flutter](https://flutter.dev/) (Dart)
+- **Backend:** [Firebase](https://firebase.google.com/)  
+  - Authentication  
+  - Firestore Database  
+  - Firebase Cloud Messaging  
+- **Maps:** Google Maps SDK
+- **State Management:** Cubit (Bloc)
+
+---
+
+## 📱 Screenshots
+
+> Add your app screenshots here for better presentation.  
+Example:
+
+| Home Screen | Trip Details | Requests |
+|-------------|--------------|----------|
+| ![Home](docs/screenshots/home.png) | ![Trip](docs/screenshots/trip.png) | ![Requests](docs/screenshots/requests.png) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Flutter SDK (latest stable version)
+- Dart SDK
+- Android Studio / VS Code
+- Firebase project setup (with Firestore & FCM enabled)
+- Google Maps API key
+
+### Installation
+
+1. Clone the repo:
+   ```bash
+   git clone https://github.com/hamedrefaat1/carpooling_app.git
+   cd carpooling_app
