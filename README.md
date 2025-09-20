@@ -36,8 +36,8 @@ It helps reduce travel costs, minimize traffic, and promote eco-friendly transpo
 
 ### 📌 DFD (Data Flow Diagrams)
 ![DFD](system_design/DFD/context_dfd.png)
-![DFD](system_design/DFD/context_dfd.png)
-![DFD](system_design/DFD/context_dfd.png)
+![DFD](system_design/DFD/dfd_level1.png)
+![DFD](system_design/DFD/dfd_level2.png)
 
 ### 📌 Use Case Diagrams
 ![Use Case](system_design/Use_Case/use_case_diagram.png)
