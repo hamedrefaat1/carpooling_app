@@ -6,62 +6,55 @@ It helps reduce travel costs, minimize traffic, and promote eco-friendly transpo
 ---
 
 ## ✨ Features
-
-- 🔐 **Authentication**
-  - Firebase Authentication (Email/Password, Phone Number, Google Sign-in)
-- 🧑‍🤝‍🧑 **User Roles**
-  - Driver: Create and manage trips
-  - Passenger: Browse and join trips
-- 📍 **Live Location**
-  - Track driver and passenger location on Google Maps
-- 📅 **Trip Management**
-  - Drivers can create, update, and delete trips
-  - Passengers can request to join trips
-- 🔔 **Push Notifications**
-  - Powered by Firebase Cloud Messaging (FCM)
-- 🎨 **Modern UI**
-  - Light/Dark mode support
-  - Custom themes
-- ⚡ **Real-time Updates**
-  - Integrated with Firebase Firestore for instant data sync
+- 🔐 **Authentication** with Firebase
+- 🧑‍🤝‍🧑 **User Roles** (Driver / Passenger)
+- 📍 **Live Location** using Google Maps
+- 📅 **Trip Management** (create, join, manage trips)
+- 🔔 **Push Notifications** with FCM
+- 🎨 **Modern UI** (Light & Dark mode)
+- ⚡ **Real-time Updates** with Firestore
 
 ---
 
 ## 🛠️ Tech Stack
-
-- **Frontend:** [Flutter](https://flutter.dev/) (Dart)
-- **Backend:** [Firebase](https://firebase.google.com/)  
-  - Authentication  
-  - Firestore Database  
-  - Firebase Cloud Messaging  
-- **Maps:** Google Maps SDK
-- **State Management:** Cubit (Bloc)
+- **Frontend:** Flutter (Dart)  
+- **Backend:** Firebase (Auth, Firestore, FCM)  
+- **Maps:** Google Maps SDK  
+- **State Management:** Cubit (Bloc)  
 
 ---
 
 ## 📱 Screenshots
 
-> Add your app screenshots here for better presentation.  
-Example:
-
 | Home Screen | Trip Details | Requests |
 |-------------|--------------|----------|
-| ![Home](docs/screenshots/home.png) | ![Trip](docs/screenshots/trip.png) | ![Requests](docs/screenshots/requests.png) |
+| ![Home](screenshots/home.png) | ![Trip](screenshots/trip.png) | ![Requests](screenshots/requests.png) |
+
+---
+
+## 🖼️ System Design
+
+### 📌 DFD (Data Flow Diagrams)
+![DFD](system_design/DFD/context_dfd.png)
+![DFD](system_design/DFD/context_dfd.png)
+![DFD](system_design/DFD/context_dfd.png)
+
+### 📌 Use Case Diagrams
+![Use Case](system_design/Use_Case/use_case_diagram.png)
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Flutter SDK (latest stable version)
+- Flutter SDK (latest stable)
 - Dart SDK
-- Android Studio / VS Code
-- Firebase project setup (with Firestore & FCM enabled)
+- Firebase project (Auth, Firestore, FCM)
 - Google Maps API key
 
 ### Installation
-
-1. Clone the repo:
-   ```bash
-   git clone https://github.com/hamedrefaat1/carpooling_app.git
-   cd carpooling_app
+```bash
+git clone https://github.com/hamedrefaat1/carpooling_app.git
+cd carpooling_app
+flutter pub get
+flutter run
