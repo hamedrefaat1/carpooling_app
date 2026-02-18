@@ -83,6 +83,7 @@ That’s the power of smart carpooling.
 
 <p align="center">
   <img src="screenshots/chat.jpg" width="230"/>
+  <img src="screenshots/chatII.jpg" width="230"/>
   <img src="screenshots/driver_trip_request_join.jpg" width="230"/>
   <img src="screenshots/line_to_distention.jpg" width="230"/>
   <img src="screenshots/notifications.jpg" width="230"/>
