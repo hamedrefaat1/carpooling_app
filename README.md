@@ -64,6 +64,7 @@ That’s the power of smart carpooling.
   <img src="screenshots/rider_home.jpg" width="230"/>
   <img src="screenshots/rider_requests.jpg" width="230"/>
   <img src="screenshots/rider_profile.jpg" width="230"/>
+  <img src="screenshots/rider_can_send_request_join.jpg" width="230"/>
 </p>
 
 ---
