@@ -32,6 +32,7 @@ dependencies:
   page_transition: ^2.0.9
   flutter_rating_bar: ^4.0.1
   iconsax: ^0.0.8
+  flutter_launcher_icons: ^0.14.4
   
 
 dev_dependencies:
@@ -45,3 +46,8 @@ flutter:
   assets:
     - .env
     - assets/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/Icon_app.webp"

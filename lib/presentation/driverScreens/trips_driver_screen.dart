@@ -138,7 +138,7 @@ class _TripsDriverScreenState extends State<TripsDriverScreen>
             ),
             SizedBox(height: 12.h),
             Text(
-              'Start by creating your first trip\nand connect with passengers',
+              'Start by creating your first trip\nand connect with passengers\n from home page',
               style: TextStyle(
                 fontSize: 14.sp,
                 color: isDarkMode
@@ -148,23 +148,7 @@ class _TripsDriverScreenState extends State<TripsDriverScreen>
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 32.h),
-            ElevatedButton.icon(
-              onPressed: () {
-                // Navigate to create trip
-              },
-              icon: Icon(Icons.add, size: 20.sp),
-              label: Text('Create Trip', style: TextStyle(fontSize: 16.sp)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 32.w, vertical: 16.h),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
-                ),
-                elevation: 0,
-              ),
-            ),
+          
           ],
         ),
       ),
@@ -614,6 +598,7 @@ class _TripsDriverScreenState extends State<TripsDriverScreen>
   }
 
   void _deleteTrip(TripModel trip, bool isDarkMode) {
+    final cubit = context.read<DriverTripManagementCubit>();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -684,7 +669,7 @@ class _TripsDriverScreenState extends State<TripsDriverScreen>
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        // TODO: Implement actual delete trip logic
+                        cubit.deleteTrip(trip.id);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.error,

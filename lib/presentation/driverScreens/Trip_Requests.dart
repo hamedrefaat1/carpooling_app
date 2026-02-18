@@ -4,6 +4,7 @@ import 'package:carpooling_app/business_logic/cubits/DriverTripManagement/Driver
 import 'package:carpooling_app/business_logic/cubits/DriverTripManagement/DriverTripManagementStates.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';
 import 'package:carpooling_app/data/models/join_request.dart';
+import 'package:carpooling_app/presentation/widgets/ChatDialog.dart';
 import 'package:carpooling_app/presentation/widgets/buildShimmerRequestCard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -366,7 +367,7 @@ class _TripRequestsState extends State<TripRequests>
               _buildRequestInfo(request, isDarkMode),
               if (isPending || isAccepted) ...[
                 SizedBox(height: 20.h),
-                _buildActionButtons(request, tripCubit, isPending, isAccepted , isDarkMode,)
+                _buildActionButtons(request, tripCubit, isPending, isAccepted , isDarkMode,riderInfo)
               ],
             ],
           ),
@@ -531,6 +532,7 @@ class _TripRequestsState extends State<TripRequests>
     bool isPending,
     bool isAccepted,
     bool isDarkMode,
+     Map<String, dynamic>? riderInfo,
   ) {
     if (isPending) {
       return Row(
@@ -583,6 +585,7 @@ class _TripRequestsState extends State<TripRequests>
         child: ElevatedButton.icon(
           onPressed: () {
             // Navigate to chat screen
+             _showChatDialog(context, request, riderInfo, isDarkMode);
           },
           icon: Icon(Icons.chat_bubble, size: 18.sp),
           label: Text("Start Chat", style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600)),
@@ -685,4 +688,17 @@ class _TripRequestsState extends State<TripRequests>
       ),
     );
   }
+
+  void _showChatDialog(BuildContext context, JoinRequest request, Map<String, dynamic>? riderInfo, bool isDarkMode) {
+  showDialog(
+    context: context,
+    builder: (context) => ChatDialog(
+      tripId: widget.tripId,
+      requestId: request.id,
+      otherUserId: request.riderId,
+      otherUserName: riderInfo?["fullName"] ?? "Unknown Rider",
+      userType: "driver",
+    ),
+  );
+}
 }

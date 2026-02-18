@@ -43,6 +43,12 @@ class DriverTripManagementCubit extends Cubit<DriverTripManagementStates> {
     }
   }
 
+// delete trip 
+Future<void> deleteTrip(tripId)async{
+  await FirebaseFirestore.instance.collection("trips").doc(tripId).delete();
+  await getAllDriverTrips();
+
+}
   // get all requests for specific trip
   Future<void> getAllTripRequests(String tripId) async {
     try {

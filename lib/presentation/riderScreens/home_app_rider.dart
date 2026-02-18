@@ -3,6 +3,7 @@ import 'package:carpooling_app/business_logic/cubits/MapDisplayCubit/MapDisplayC
 import 'package:carpooling_app/business_logic/cubits/MapDisplayCubit/MapDisplayStates.dart';
 import 'package:carpooling_app/business_logic/cubits/requestToJoinTripCubit/requestToJoinTripCubit.dart';
 import 'package:carpooling_app/business_logic/cubits/requestToJoinTripCubit/requestToJoinTripStetes.dart';
+import 'package:carpooling_app/business_logic/cubits/riderJoinRequests.dart/riderJoinRequestsCubit.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';
 import 'package:carpooling_app/data/models/TripVisualizationData.dart';
 import 'package:carpooling_app/data/models/UserLocationData.dart';
@@ -793,7 +794,8 @@ class _HomeAppRiderState extends State<HomeAppRider>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Driver: ${trip.driverId}',
+                     // 'Driver: ${trip.driverId}',
+                     'Driver: Hamed',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: isDarkMode
@@ -946,6 +948,8 @@ class _HomeAppRiderState extends State<HomeAppRider>
 
   void _requestToJoinTrip(TripModel trip) {
     final cubit = context.read<Requesttojointripcubit>();
+    final cubit2= context.read<RiderJoinRequestsCubit>();
+    String riderId = FirebaseAuth.instance.currentUser!.uid;
     showDialog(
       context: context,
       builder: (context) {
@@ -954,6 +958,7 @@ class _HomeAppRiderState extends State<HomeAppRider>
           listener: (context, state) {
             if (state is JoinRequestSuccess) {
               Navigator.pop(context);
+               cubit2.getRiderJoinRequests(riderId);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Trip request sent successfully!'),
@@ -1050,7 +1055,10 @@ class _HomeAppRiderState extends State<HomeAppRider>
 
                 if (state is! JoinRequestLoading)
                   ElevatedButton(
-                    onPressed: () => cubit.sendRquestToJoinTrip(trip.id!),
+                    onPressed: (){
+                 cubit.sendRquestToJoinTrip(trip.id!);
+                
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,

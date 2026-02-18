@@ -6,6 +6,7 @@ import 'package:carpooling_app/presentation/riderScreens/rider_profile_screen.da
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:iconsax/iconsax.dart';
 
 
 class RiderMainShell extends StatefulWidget {
@@ -110,8 +111,8 @@ class _RiderMainShellState extends State<RiderMainShell>
             label: "Home",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.route_outlined),
-            activeIcon: Icon(Icons.route),
+            icon: Icon(Iconsax.car),
+            activeIcon: Icon(Iconsax.car),
             label: "My Requests",
           ),
         ],

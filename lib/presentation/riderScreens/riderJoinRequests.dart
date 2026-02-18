@@ -2,6 +2,7 @@ import 'package:carpooling_app/business_logic/cubits/riderJoinRequests.dart/ride
 import 'package:carpooling_app/business_logic/cubits/riderJoinRequests.dart/riderJoinRequestsStates.dart';
 import 'package:carpooling_app/constants/themeAndColors.dart';
 import 'package:carpooling_app/data/models/riderRiderRequestWithTripData.dart';
+import 'package:carpooling_app/presentation/widgets/ChatDialog.dart';
 import 'package:carpooling_app/presentation/widgets/buildShimmerJoinRequestCard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,8 @@ class _RiderJoinRequestsScreenState extends State<RiderJoinRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+ 
 
     return Scaffold(
       appBar: _buildAppBar(isDarkMode),
@@ -495,6 +498,7 @@ class _RiderJoinRequestsScreenState extends State<RiderJoinRequestsScreen> {
                   ElevatedButton.icon(
                     onPressed: () {
                       // TODO: Navigate to Chat Screen
+                      _showChatDialog(context, data, isDarkMode);
                     },
                     icon: Icon(Icons.chat, size: 18.sp),
                     label: Text("Chat", style: TextStyle(fontSize: 12.sp)),
@@ -609,4 +613,16 @@ class _RiderJoinRequestsScreenState extends State<RiderJoinRequestsScreen> {
       },
     );
   }
+   void _showChatDialog(BuildContext context, RiderRequestWithTripData data, bool isDarkMode) {
+  showDialog(
+    context: context,
+    builder: (context) => ChatDialog(
+      tripId: data.tripData.id!,
+      requestId: data.request.id,
+      otherUserId: data.tripData.driverId,
+      otherUserName: data.driverData["fullName"] ?? "Unknown Driver",
+      userType: "passenger",
+    ),
+  );
+}
 }

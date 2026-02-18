@@ -19,82 +19,84 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     
-    return Scaffold(
-     backgroundColor: isDark
-            ? AppColors.darkBackground
-            : AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // AppBar with background image
-          SliverAppBar(
-            expandedHeight: 250,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    'assets/profile_bg.png',
-                    fit: BoxFit.cover,
-                    color: isDark 
-                      ? Colors.blue[900]!.withOpacity(0.8)
-                      : Colors.blue[800]!.withOpacity(0.7),
-                    colorBlendMode: BlendMode.darken,
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [
-                          Colors.black.withOpacity(0.7),
-                          Colors.transparent,
-                        ],
+    return SafeArea(
+      child: Scaffold(
+       backgroundColor: isDark
+              ? AppColors.darkBackground
+              : AppColors.background,
+        body: CustomScrollView(
+          slivers: [
+            // AppBar with background image
+            SliverAppBar(
+              expandedHeight: 250,
+              floating: false,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      'assets/profile_bg.png',
+                      fit: BoxFit.cover,
+                      color: isDark 
+                        ? Colors.blue[900]!.withOpacity(0.8)
+                        : Colors.blue[800]!.withOpacity(0.7),
+                      colorBlendMode: BlendMode.darken,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.7),
+                            Colors.transparent,
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.edit, color: Colors.white),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+      
+            // Profile content
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // User information
+                    _buildProfileHeader(context),
+                    const SizedBox(height: 24),
+      
+                    // Statistics
+                    _buildStatsSection(context),
+                    const SizedBox(height: 24),
+      
+                    // Rating
+                    _buildRatingSection(context),
+                    const SizedBox(height: 24),
+      
+                    // Tabs
+                    _buildTabBar(context),
+                    const SizedBox(height: 16),
+      
+                    // Tab content
+                    _buildTabContent(context),
+                  ],
+                ),
               ),
             ),
-            actions: [
-              IconButton(
-                icon: Icon(Icons.edit, color: Colors.white),
-                onPressed: () {},
-              ),
-            ],
-          ),
-
-          // Profile content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // User information
-                  _buildProfileHeader(context),
-                  const SizedBox(height: 24),
-
-                  // Statistics
-                  _buildStatsSection(context),
-                  const SizedBox(height: 24),
-
-                  // Rating
-                  _buildRatingSection(context),
-                  const SizedBox(height: 24),
-
-                  // Tabs
-                  _buildTabBar(context),
-                  const SizedBox(height: 16),
-
-                  // Tab content
-                  _buildTabContent(context),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -135,7 +137,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Ahmed Mohamed',
+                'Hamed Refaat',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

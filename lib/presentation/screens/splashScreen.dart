@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -54,7 +55,6 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _initializeAnimations() {
-    // timer inimation 15 second
     _mainController = AnimationController(
       duration: const Duration(milliseconds: 15000),
       vsync: this,
@@ -108,32 +108,32 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _backgroundController, curve: Curves.linear),
     );
 
-    _colorAnimation =
-        ColorTween(
-          begin: const Color(0xFF6C5CE7),
-          end: const Color(0xFF00D4FF),
-        ).animate(
-          CurvedAnimation(
-            parent: _mainController,
-            curve: const Interval(0.2, 0.6, curve: Curves.easeInOut),
-          ),
-        );
+    _colorAnimation = ColorTween(
+      begin: const Color(0xFF6C5CE7),
+      end: const Color(0xFF00D4FF),
+    ).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: const Interval(0.2, 0.6, curve: Curves.easeInOut),
+      ),
+    );
 
-    _car1Animation = Tween<double>(begin: -200.0, end: 200.0).animate(
+    // car animations - scaled relative to screen width (390 base design width)
+    _car1Animation = Tween<double>(begin: -0.51.sw, end: 0.51.sw).animate(
       CurvedAnimation(
         parent: _carsController,
         curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
       ),
     );
 
-    _car2Animation = Tween<double>(begin: -180.0, end: 180.0).animate(
+    _car2Animation = Tween<double>(begin: -0.46.sw, end: 0.46.sw).animate(
       CurvedAnimation(
         parent: _carsController,
         curve: const Interval(0.2, 0.8, curve: Curves.easeInOut),
       ),
     );
 
-    _car3Animation = Tween<double>(begin: -160.0, end: 160.0).animate(
+    _car3Animation = Tween<double>(begin: -0.41.sw, end: 0.41.sw).animate(
       CurvedAnimation(
         parent: _carsController,
         curve: const Interval(0.4, 1.0, curve: Curves.easeInOut),
@@ -155,17 +155,13 @@ class _SplashScreenState extends State<SplashScreen>
 
     Timer(const Duration(milliseconds: 4000), () {
       if (mounted) {
-        setState(() {
-          _showTypingAnimation = true;
-        });
+        setState(() => _showTypingAnimation = true);
       }
     });
 
     Timer(const Duration(milliseconds: 7000), () {
       if (mounted) {
-        setState(() {
-          _showCarpoolingAnimation = true;
-        });
+        setState(() => _showCarpoolingAnimation = true);
         _pathController.forward();
         _carsController.forward();
       }
@@ -173,9 +169,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Timer(const Duration(milliseconds: 12000), () {
       if (mounted) {
-        setState(() {
-          _showDescription = true;
-        });
+        setState(() => _showDescription = true);
       }
     });
 
@@ -187,12 +181,8 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startTransitionAnimation() async {
-    setState(() {
-      _isTransitioning = true;
-    });
-
+    setState(() => _isTransitioning = true);
     await _transitionController.forward();
-
     if (mounted) {
       Navigator.of(context).pushReplacementNamed(signUpScreen);
     }
@@ -225,6 +215,8 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  // ─── Animated Background ────────────────────────────────────────────────────
+
   Widget _buildAnimatedBackground() {
     return AnimatedBuilder(
       animation: _backgroundController,
@@ -237,12 +229,12 @@ class _SplashScreenState extends State<SplashScreen>
                 math.cos(_backgroundController.value * 2 * math.pi) * 0.3,
               ),
               radius: 1.8,
-              colors: [
-                const Color(0xFF0A0A0A),
-                const Color(0xFF1A1A2E),
-                const Color(0xFF16213E),
-                const Color(0xFF0F3460),
-                const Color(0xFF0A0A0A),
+              colors: const [
+                Color(0xFF0A0A0A),
+                Color(0xFF1A1A2E),
+                Color(0xFF16213E),
+                Color(0xFF0F3460),
+                Color(0xFF0A0A0A),
               ],
             ),
           ),
@@ -250,6 +242,8 @@ class _SplashScreenState extends State<SplashScreen>
       },
     );
   }
+
+  // ─── Floating Particles ──────────────────────────────────────────────────────
 
   Widget _buildFloatingParticles() {
     return AnimatedBuilder(
@@ -263,65 +257,91 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  // ─── Main Content ────────────────────────────────────────────────────────────
+
   Widget _buildMainContent() {
-    return Center(
-      child: AnimatedBuilder(
-        animation: _mainController,
-        builder: (context, child) {
-          return Opacity(
-            opacity: _fadeAnimation.value,
-            child: Transform.scale(
-              scale: _scaleAnimation.value,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // logo app
-                  _buildAnimatedLogo(),
+    return SafeArea(
+      child: Center(
+        child: AnimatedBuilder(
+          animation: _mainController,
+          builder: (context, child) {
+            return Opacity(
+              opacity: _fadeAnimation.value,
+              child: Transform.scale(
+                scale: _scaleAnimation.value,
+                child: SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.w),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(height: 20.h),
 
-                  const SizedBox(height: 60),
+                        // Logo
+                        _buildAnimatedLogo(),
 
-                  // inamiation carpooling
-                  if (_showCarpoolingAnimation) _buildCarpoolingAnimation(),
+                        SizedBox(height: 40.h),
 
-                  const SizedBox(height: 60),
+                        // Carpooling Animation
+                        if (_showCarpoolingAnimation)
+                          _buildCarpoolingAnimation(),
 
-                  // name app and slowly weirning
-                  if (_showTypingAnimation) _buildTypingAnimation(),
+                        if (!_showCarpoolingAnimation) SizedBox(height: 150.h),
 
-                  const SizedBox(height: 40),
+                        SizedBox(height: 40.h),
 
-                  // descripuion
-                  if (_showDescription) _buildAnimatedDescription(),
+                        // App Name Typing
+                        if (_showTypingAnimation) _buildTypingAnimation(),
 
-                  const SizedBox(height: 80),
+                        if (!_showTypingAnimation) SizedBox(height: 70.h),
 
-                  // loading pionter
-                  _buildModernLoader(),
-                ],
+                        SizedBox(height: 30.h),
+
+                        // Description
+                        if (_showDescription) _buildAnimatedDescription(),
+
+                        if (!_showDescription) SizedBox(height: 80.h),
+
+                        SizedBox(height: 40.h),
+
+                        // Loader
+                        _buildModernLoader(),
+
+                        SizedBox(height: 20.h),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
 
+  // ─── Animated Logo ───────────────────────────────────────────────────────────
+
   Widget _buildAnimatedLogo() {
+    final logoSize = 160.r;
+    final innerSize = 100.r;
+
     return AnimatedBuilder(
       animation: _logoController,
       builder: (context, child) {
-        return Container(
-          width: 160,
-          height: 160,
+        return SizedBox(
+          width: logoSize,
+          height: logoSize,
           child: Stack(
             children: [
-              // moving circle
+              // rotating rings
               for (int i = 0; i < 3; i++)
                 Positioned.fill(
                   child: Transform.rotate(
                     angle: _rotationAnimation.value + (i * math.pi / 3),
                     child: Container(
-                      margin: EdgeInsets.all(i * 15.0),
+                      margin: EdgeInsets.all(i * 15.r),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
@@ -330,18 +350,18 @@ class _SplashScreenState extends State<SplashScreen>
                             const Color(0xFF00D4FF),
                             const Color(0xFF74B9FF),
                           ][i].withOpacity(0.4),
-                          width: 2,
+                          width: 2.r,
                         ),
                       ),
                     ),
                   ),
                 ),
 
-              // centeral logo
+              // center icon
               Center(
                 child: Container(
-                  width: 100,
-                  height: 100,
+                  width: innerSize,
+                  height: innerSize,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
@@ -352,21 +372,21 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.3),
-                      width: 3,
+                      width: 3.r,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: (_colorAnimation.value ?? Colors.blue)
                             .withOpacity(0.6),
-                        blurRadius: 30,
-                        spreadRadius: 8,
+                        blurRadius: 30.r,
+                        spreadRadius: 8.r,
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.directions_car_rounded,
                     color: Colors.white,
-                    size: 50,
+                    size: 50.r,
                   ),
                 ),
               ),
@@ -377,12 +397,19 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  // ─── Carpooling Animation ────────────────────────────────────────────────────
+
   Widget _buildCarpoolingAnimation() {
-    return Container(
-      width: 350,
-      height: 150,
+    final containerWidth = 1.sw - 48.w; // full width minus horizontal padding
+    final containerHeight = containerWidth * 0.43;
+    final centerX = containerWidth / 2;
+
+    return SizedBox(
+      width: containerWidth,
+      height: containerHeight,
       child: Stack(
         children: [
+          // animated path
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _pathAnimation,
@@ -394,111 +421,53 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
 
+          // cars
           AnimatedBuilder(
             animation: _carsController,
             builder: (context, child) {
               return Stack(
                 children: [
-                  // blue car
+                  // cyan car
                   Positioned(
-                    left: 175 + _car1Animation.value,
-                    top: 60,
-                    child: Transform.scale(
-                      scale: 0.8,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00D4FF),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF00D4FF).withOpacity(0.5),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.directions_car,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    ),
+                    left: centerX + _car1Animation.value,
+                    top: containerHeight * 0.40,
+                    child: _buildCarWidget(const Color(0xFF00D4FF)),
                   ),
 
-                  // praple car
+                  // purple car
                   Positioned(
-                    left: 175 + _car2Animation.value,
-                    top: 40,
-                    child: Transform.scale(
-                      scale: 0.8,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6C5CE7),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF6C5CE7).withOpacity(0.5),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.directions_car,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    ),
+                    left: centerX + _car2Animation.value,
+                    top: containerHeight * 0.25,
+                    child: _buildCarWidget(const Color(0xFF6C5CE7)),
                   ),
 
-                  //car 3 blue 2
+                  // light blue car
                   Positioned(
-                    left: 175 + _car3Animation.value,
-                    top: 80,
-                    child: Transform.scale(
-                      scale: 0.8,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF74B9FF),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF74B9FF).withOpacity(0.5),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.directions_car,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    ),
+                    left: centerX + _car3Animation.value,
+                    top: containerHeight * 0.55,
+                    child: _buildCarWidget(const Color(0xFF74B9FF)),
                   ),
 
-                  // start piont
-                  const Positioned(
-                    left: 20,
-                    top: 65,
+                  // start point
+                  Positioned(
+                    left: containerWidth * 0.04,
+                    top: containerHeight * 0.42,
                     child: Icon(
                       Icons.location_on,
                       color: Colors.green,
-                      size: 30,
+                      size: 30.r,
                     ),
                   ),
 
-                  // end piont
-                  const Positioned(
-                    right: 20,
-                    top: 65,
-                    child: Icon(Icons.flag, color: Colors.red, size: 30),
+                  // end point
+                  Positioned(
+                    right: containerWidth * 0.04,
+                    top: containerHeight * 0.42,
+                    child: Icon(
+                      Icons.flag,
+                      color: Colors.red,
+                      size: 30.r,
+                    ),
                   ),
                 ],
               );
@@ -509,15 +478,42 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate().fadeIn(duration: 1000.ms).slideY(begin: 0.5);
   }
 
+  Widget _buildCarWidget(Color color) {
+    return Transform.scale(
+      scale: 0.8,
+      child: Container(
+        padding: EdgeInsets.all(8.r),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(20.r),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.5),
+              blurRadius: 10.r,
+              spreadRadius: 2.r,
+            ),
+          ],
+        ),
+        child: Icon(
+          Icons.directions_car,
+          color: Colors.white,
+          size: 24.r,
+        ),
+      ),
+    );
+  }
+
+  // ─── Typing Animation ────────────────────────────────────────────────────────
+
   Widget _buildTypingAnimation() {
     return AnimatedTextKit(
       animatedTexts: [
         TypewriterAnimatedText(
           'HOPIN',
           textStyle: TextStyle(
-            fontSize: 56,
+            fontSize: 56.sp,
             fontWeight: FontWeight.w900,
-            letterSpacing: 12,
+            letterSpacing: 12.w,
             foreground: Paint()
               ..shader = LinearGradient(
                 colors: [
@@ -527,11 +523,14 @@ class _SplashScreenState extends State<SplashScreen>
                   Colors.white,
                 ],
                 stops: const [0.0, 0.3, 0.7, 1.0],
-              ).createShader(const Rect.fromLTWH(0.0, 0.0, 300.0, 70.0)),
+              ).createShader(
+                Rect.fromLTWH(0.0, 0.0, 0.7.sw, 70.h),
+              ),
             shadows: [
               Shadow(
-                color: (_colorAnimation.value ?? Colors.blue).withOpacity(0.8),
-                blurRadius: 20,
+                color:
+                    (_colorAnimation.value ?? Colors.blue).withOpacity(0.8),
+                blurRadius: 20.r,
                 offset: const Offset(0, 0),
               ),
             ],
@@ -545,6 +544,8 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  // ─── Description ─────────────────────────────────────────────────────────────
+
   Widget _buildAnimatedDescription() {
     return Column(
       children: [
@@ -554,9 +555,9 @@ class _SplashScreenState extends State<SplashScreen>
               'Share Your Journey, Save Together',
               textStyle: TextStyle(
                 color: Colors.white.withOpacity(0.9),
-                fontSize: 20,
+                fontSize: 18.sp,
                 fontWeight: FontWeight.w400,
-                letterSpacing: 2,
+                letterSpacing: 2.w,
               ),
               speed: const Duration(milliseconds: 100),
               textAlign: TextAlign.center,
@@ -566,8 +567,7 @@ class _SplashScreenState extends State<SplashScreen>
           displayFullTextOnTap: false,
           stopPauseOnTap: false,
         ),
-        const SizedBox(height: 15),
-
+        SizedBox(height: 15.h),
         Animate(
           effects: const [
             FadeEffect(
@@ -586,9 +586,9 @@ class _SplashScreenState extends State<SplashScreen>
                 'Connect • Travel • Save Money • Help Environment',
                 textStyle: TextStyle(
                   color: Colors.white.withOpacity(0.7),
-                  fontSize: 14,
+                  fontSize: 13.sp,
                   fontWeight: FontWeight.w300,
-                  letterSpacing: 1,
+                  letterSpacing: 1.w,
                 ),
                 speed: const Duration(milliseconds: 80),
                 textAlign: TextAlign.center,
@@ -603,6 +603,8 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  // ─── Modern Loader ───────────────────────────────────────────────────────────
+
   Widget _buildModernLoader() {
     return AnimatedBuilder(
       animation: _mainController,
@@ -610,8 +612,8 @@ class _SplashScreenState extends State<SplashScreen>
         return Opacity(
           opacity: _fadeAnimation.value,
           child: SizedBox(
-            width: 80,
-            height: 80,
+            width: 80.r,
+            height: 80.r,
             child: CustomPaint(
               painter: ModernLoaderPainter(_mainController.value),
             ),
@@ -620,6 +622,8 @@ class _SplashScreenState extends State<SplashScreen>
       },
     );
   }
+
+  // ─── Glow Effect ─────────────────────────────────────────────────────────────
 
   Widget _buildGlowEffect() {
     return Positioned.fill(
@@ -643,6 +647,8 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
+  // ─── Transition Overlay ───────────────────────────────────────────────────────
+
   Widget _buildTransitionOverlay() {
     return AnimatedBuilder(
       animation: _transitionController,
@@ -654,10 +660,10 @@ class _SplashScreenState extends State<SplashScreen>
               scale: 1.0 + (_transitionAnimation.value * 2),
               child: Opacity(
                 opacity: 1.0 - _transitionAnimation.value,
-                child: const Icon(
+                child: Icon(
                   Icons.directions_car_rounded,
                   color: Colors.white,
-                  size: 100,
+                  size: 100.r,
                 ),
               ),
             ),
@@ -667,6 +673,8 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
+
+// ─── Custom Painters ───────────────────────────────────────────────────────────
 
 class CarpoolingPathPainter extends CustomPainter {
   final double animationValue;
@@ -681,12 +689,11 @@ class CarpoolingPathPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-
-    path.moveTo(40, size.height / 2);
+    path.moveTo(size.width * 0.08, size.height / 2);
     path.quadraticBezierTo(
       size.width / 2,
-      size.height / 2 - 20,
-      size.width - 40,
+      size.height / 2 - size.height * 0.2,
+      size.width * 0.92,
       size.height / 2,
     );
 
@@ -695,7 +702,6 @@ class CarpoolingPathPainter extends CustomPainter {
       0,
       pathMetric.length * animationValue,
     );
-
     canvas.drawPath(extractedPath, paint);
 
     if (animationValue > 0.2) {
@@ -704,7 +710,8 @@ class CarpoolingPathPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
 
       for (double i = 0; i <= animationValue; i += 0.1) {
-        final position = pathMetric.getTangentForOffset(pathMetric.length * i);
+        final position =
+            pathMetric.getTangentForOffset(pathMetric.length * i);
         if (position != null) {
           canvas.drawCircle(position.position, 2, pointPaint);
         }
@@ -737,14 +744,20 @@ class ParticlesPainter extends CustomPainter {
       paint.color = particle.color.withOpacity(
         0.4 *
             (0.5 +
-                0.5 * math.sin(animationValue * 2 * math.pi + particle.phase)),
+                0.5 *
+                    math.sin(
+                      animationValue * 2 * math.pi + particle.phase,
+                    )),
       );
 
       canvas.drawCircle(
         Offset(x, y),
         particle.size *
             (0.8 +
-                0.4 * math.sin(animationValue * 3 * math.pi + particle.phase)),
+                0.4 *
+                    math.sin(
+                      animationValue * 3 * math.pi + particle.phase,
+                    )),
         paint,
       );
     }
@@ -805,7 +818,7 @@ class ModernLoaderPainter extends CustomPainter {
 
       final currentRadius = radius - (i * 6);
       final startAngle = (animationValue * 3 * math.pi) + (i * math.pi / 2);
-      final sweepAngle = math.pi * 0.8;
+      const sweepAngle = math.pi * 0.8;
 
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: currentRadius),

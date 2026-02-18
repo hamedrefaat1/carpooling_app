@@ -7,6 +7,7 @@ import 'package:carpooling_app/presentation/driverScreens/trips_driver_screen.da
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:iconsax/iconsax.dart';
 
 class DriverMainShell extends StatefulWidget {
   const DriverMainShell({super.key});
@@ -148,8 +149,8 @@ class _DriverMainShellState extends State<DriverMainShell>
             label: "Home",
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.route_outlined),
-            activeIcon: Icon(Icons.route),
+            icon: Icon(Iconsax.car),
+            activeIcon: Icon(Iconsax.car),
             label: "My Trips",
           ),
         ],
