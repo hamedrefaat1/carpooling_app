@@ -76,6 +76,7 @@ That’s the power of smart carpooling.
   <img src="screenshots/driver_trips.jpg" width="230"/>
   <img src="screenshots/driver_active_trip.jpg" width="230"/>
   <img src="screenshots/driver_profile.jpg" width="230"/>
+  <img src="screenshots/driver_where_he_go.jpg" width="230"/>
 </p>
 
 ---
