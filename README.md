@@ -81,7 +81,7 @@ That's the power of smart carpooling.
 
 <p align="center">
   <img src="screenshots/auth_enter_number.jpg" width="200"/>
-  <img src="screenshots/auth_verfiy_phone.jpg.jpg" width="200"/>
+  <img src="screenshots/auth_verfiy_phone.jpg" width="200"/>
   <img src="screenshots/info_user.jpg" width="200"/>
 </p>
 
